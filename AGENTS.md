@@ -6,11 +6,12 @@ Restora es una plataforma SaaS multiempresa para restaurantes, inicialmente diri
 
 En caso de contradicción, respeta las decisiones explícitas posteriores del propietario. En particular, la web se alojará en **Firebase App Hosting**; Vercel no forma parte del plan aprobado.
 
-## Estado conocido al Día 7
+## Estado conocido al Día 8
 
-- La fase actual es preparación y arquitectura. Hay documentación y configuración local, pero todavía no hay aplicación Next.js, `package.json`, código de Cloud Functions ni suite de pruebas.
+- La fase actual es autenticación y permisos. Hay documentación y configuración local, pero todavía no hay aplicación Next.js, `package.json`, código de Cloud Functions ni suite de pruebas.
 - `docs/PROJECT_REQUIREMENTS.md`, `docs/SYSTEM_ARCHITECTURE.md`, `docs/DATABASE_SCHEMA.md`, `docs/FIREBASE_STRUCTURE.md` y `docs/DEVELOPMENT_ENVIRONMENT.md` describen las decisiones y el alcance aprobados hasta el Día 6.
 - `firebase.json` configura emuladores locales de Auth, Firestore y Storage. `.firebaserc` apunta a `demo-restora-saas`. No hay proyecto real vinculado, datos productivos ni despliegues.
+- `firebase.json` declara correo/contraseña como proveedor de Firebase Authentication. Es configuración versionada pendiente de aplicarse a un proyecto real; los flujos de aplicación aún no existen.
 - `firestore.rules` y `storage.rules` son reglas temporales de denegación total. No las relajes para que una función “parezca funcionar”; sustitúyelas por reglas revisadas y tenant-aware en la jornada de seguridad correspondiente.
 - El propietario aprobó una sede principal por restaurante, sedes adicionales condicionadas al plan Empresarial, inventario independiente por sede y el ciclo de reserva/consumo/liberación/reposición documentado en requisitos y esquema.
 
@@ -44,3 +45,4 @@ En caso de contradicción, respeta las decisiones explícitas posteriores del pr
 - `docs/DATABASE_SCHEMA.md`: modelo conceptual de datos.
 - `docs/FIREBASE_STRUCTURE.md`: estructura propuesta de Firestore.
 - `docs/DEVELOPMENT_ENVIRONMENT.md`: emuladores y entorno local.
+- `docs/AUTHENTICATION_SETUP.md`: proveedor configurado y límites de Auth local/producción.

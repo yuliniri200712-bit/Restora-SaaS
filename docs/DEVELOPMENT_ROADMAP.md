@@ -2,10 +2,10 @@
 
 **Duración:** 120 días
 **Fuente:** ruta aprobada del prompt maestro del proyecto
-**Estado al 2026-11-05:** Días 1–7 cerrados; siguiente jornada: Día 8
+**Estado al 2026-11-05:** Días 1–7 cerrados; Día 8 parcial; siguiente trabajo local: Día 9
 **Destino aprobado para la web:** Firebase App Hosting. Vercel queda excluido por decisión del propietario.
 
-Esta ruta se ejecuta una jornada por vez, a solicitud del propietario. El avance y las verificaciones reales se registran en `TASKS.md`. La marca `[x]` indica que se cerró el trabajo documental o técnico de esa jornada; no implica pruebas automatizadas si `TASKS.md` indica que no se ejecutaron.
+Esta ruta se ejecuta una jornada por vez, a solicitud del propietario. El avance y las verificaciones reales se registran en `TASKS.md`. `[x]` indica jornada cerrada, `[~]` trabajo parcial y `[ ]` pendiente. Una marca no implica pruebas automatizadas si `TASKS.md` indica que no se ejecutaron.
 
 ## Fase 1 — Preparación y arquitectura (Días 1–7)
 
@@ -19,7 +19,7 @@ Esta ruta se ejecuta una jornada por vez, a solicitud del propietario. El avance
 
 ## Fase 2 — Autenticación y permisos (Días 8–14)
 
-- [ ] **Día 8:** Configurar Firebase Authentication.
+- [~] **Día 8:** Configurar Firebase Authentication como configuración versionada de proveedor correo/contraseña. La configuración aún no está desplegada a un proyecto real y no se verificó el arranque del emulador.
 - [ ] **Día 9:** Implementar registro e inicio de sesión.
 - [ ] **Día 10:** Implementar recuperación de contraseña.
 - [ ] **Día 11:** Crear gestión de usuarios.

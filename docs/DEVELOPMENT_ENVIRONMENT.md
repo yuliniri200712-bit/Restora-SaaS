@@ -25,7 +25,7 @@ Detén el proceso con `Ctrl+C`. La configuración está en `firebase.json`; el a
 ## Estado de la configuración
 
 - Firestore y Storage cargan reglas temporales de denegación total (`firestore.rules` y `storage.rules`). Así, el entorno no queda abierto mientras se diseña la autorización multiempresa. Estas reglas no implementan todavía el acceso de clientes, miembros, sedes ni administradores y deben sustituirse antes de integrar flujos funcionales.
-- Authentication Emulator está disponible para desarrollo local; la configuración de proveedores y los flujos de aplicación se agregarán cuando exista la app.
+- `firebase.json` declara el proveedor de correo y contraseña como configuración para desplegar; todavía no se ha aplicado a un proyecto real. Authentication Emulator está configurado en el puerto 9099; los flujos de aplicación se agregarán en el Día 9. El emulador no envía correos reales: para verificar correo o restablecer contraseña genera enlaces locales en la salida del emulador.
 - Functions Emulator aún no está configurado porque no existe el directorio `functions/` ni código backend.
 - No se crean secretos ni archivos `.env`: todavía no hay aplicación cliente. Cuando se introduzcan, los valores locales deben mantenerse fuera de Git.
 - Firebase App Hosting sigue siendo el destino de alojamiento aprobado para la web. Esta configuración solo prepara desarrollo local; no crea un proyecto Firebase, no vincula una cuenta y no despliega servicios.
@@ -37,5 +37,7 @@ Al comenzar la app y las funciones, conectar sus SDKs a estos emuladores en desa
 ## Referencias
 
 - [Configurar Local Emulator Suite](https://firebase.google.com/docs/emulator-suite/install_and_configure)
+- [Configurar proveedores de Auth con Firebase CLI](https://firebase.google.com/docs/auth/configure-providers-cli)
+- [Conectar la app al Authentication Emulator](https://firebase.google.com/docs/emulator-suite/connect_auth)
 - [Elegir proyecto real o de demostración para los emuladores](https://firebase.google.com/docs/emulator-suite/use_hosting#choose_a_firebase_project)
 - [Probar reglas de Firestore con Emulator Suite](https://firebase.google.com/docs/firestore/security/test-rules-emulator)
