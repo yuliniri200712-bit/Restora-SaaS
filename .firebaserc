@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "demo-restora-saas"
+    "default": "demo-restora-saas",
+    "dev": "restora-demo"
   }
 }

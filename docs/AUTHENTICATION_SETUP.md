@@ -1,13 +1,13 @@
 # Configuración de Firebase Authentication
 
 **Jornada:** Día 8 — configurar Firebase Authentication
-**Estado:** configuración versionada; todavía sin aplicación cliente ni proyecto Firebase real.
+**Estado:** configuración versionada para desarrollo; sin aplicación cliente y pendiente de despliegue.
 
 ## Proveedor configurado
 
 `firebase.json` declara `auth.providers.emailPassword: true`. Correo y contraseña cubre el requisito aprobado de registro, inicio de sesión y recuperación de contraseña. No se habilitan proveedores sociales ni autenticación anónima: no están solicitados y la compra como invitado continúa pendiente de decisión.
 
-La configuración como código está respaldada por Firebase CLI. Para aplicarla a un proyecto Firebase real, Firebase documenta `firebase deploy --only auth`. No se ejecutó: el alias actual `demo-restora-saas` es solo para emuladores y no hay proyecto real vinculado.
+La configuración como código está respaldada por Firebase CLI. El Project ID real de desarrollo indicado por el propietario es `restora-demo`, registrado como alias `dev`; `demo-restora-saas` se mantiene predeterminado para emuladores. Firebase documenta aplicar proveedores con `firebase deploy --only auth`; el comando pendiente es `firebase deploy --only auth --project dev`. No se ejecutó porque la sesión local de Firebase CLI requiere reautenticación.
 
 ## Uso local
 
@@ -21,7 +21,7 @@ La configuración como código está respaldada por Firebase CLI. Para aplicarla
 
 - Esta jornada declara el proveedor para su aplicación posterior; no implementa pantallas ni lógica de registro, inicio de sesión o recuperación. Eso corresponde a los Días 9–10.
 - No se definieron políticas específicas de contraseña, verificación obligatoria de correo, MFA o inicio de sesión social. Deben decidirse antes de habilitar esos flujos.
-- No se han creado usuarios reales, claves, credenciales de servicio ni proyecto productivo.
+- No se han creado usuarios reales, claves ni credenciales de servicio; tampoco se ha desplegado App Hosting.
 - No confíes en que autenticación por sí sola autoriza acceso al tenant. Roles, membresías y permisos se configuran y validan por backend y Security Rules en sus jornadas correspondientes.
 
 ## Referencias oficiales
