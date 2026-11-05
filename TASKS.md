@@ -7,7 +7,7 @@
 
 ## Estado general
 
-La Fase 1 está cerrada y el Día 8 dejó versionada la configuración de proveedor correo/contraseña para Firebase Authentication. El propietario indicó el Project ID de desarrollo `restora-demo` y se agregó el alias `dev`; el predeterminado sigue siendo el demo local. El repositorio aún no contiene aplicación web, backend, dependencias de proyecto ni pruebas automatizadas. Auth no se ha desplegado y la sesión Firebase CLI requiere reautenticación.
+La Fase 1 está cerrada. El Día 8 configuró y desplegó el proveedor correo/contraseña de Firebase Authentication al Project ID de desarrollo `restora-demo` usando el alias `dev`; `demo-restora-saas` sigue como predeterminado para emuladores. Firebase CLI creó una “Default Web App” al aprovisionar Auth. El repositorio aún no contiene aplicación web, backend, dependencias de proyecto ni pruebas automatizadas.
 
 ## Progreso por jornada
 
@@ -20,17 +20,17 @@ La Fase 1 está cerrada y el Día 8 dejó versionada la configuración de provee
 | 5 | Estructura propuesta de Firestore en `docs/FIREBASE_STRUCTURE.md`. | **COMPLETADO Y PROBADO** | Revisión del esquema, rutas, reservas e invariantes documentados; no se crearon colecciones en un proyecto real. |
 | 6 | Configuración local de Firebase: `firebase.json`, `.firebaserc`, `firestore.rules`, `storage.rules`, `.gitignore` y `docs/DEVELOPMENT_ENVIRONMENT.md`. | **COMPLETADO Y PROBADO** | Se validó la sintaxis JSON de `firebase.json` y `.firebaserc`. Los emuladores no se iniciaron y no se descargaron binarios. |
 | 7 | Documentación inicial, este `TASKS.md`, `AGENTS.md` y la ruta de desarrollo. | **COMPLETADO Y PROBADO** | Validación documental: 120 días consecutivos, 7 cerrados y 113 pendientes; archivos sin espacios finales. No hay suite de pruebas de aplicación. |
-| 8 | Configurar Firebase Authentication: `auth.providers.emailPassword` en `firebase.json` y guía en `docs/AUTHENTICATION_SETUP.md`. | **IMPLEMENTADO PARCIALMENTE** | Configuración JSON y alias `dev` revisados. La autenticación no se desplegó: la sesión CLI requiere reautenticación. Tampoco se inició el emulador; falta verificar el runtime Java. |
+| 8 | Configurar Firebase Authentication: `auth.providers.emailPassword` en `firebase.json` y guía en `docs/AUTHENTICATION_SETUP.md`. | **COMPLETADO Y PROBADO** | `firebase deploy --only auth --project dev` finalizó correctamente y confirmó correo/contraseña habilitado en `restora-demo`. Firebase CLI creó una “Default Web App”. No se probaron flujos cliente ni se inició el emulador; corresponden a jornadas posteriores. |
 
-“Completado y probado” en esta fase significa que se verificaron los entregables documentales o de configuración descritos. No significa que se hayan probado flujos de aplicación, emuladores o servicios productivos. Para el Día 7 se ejecutó una validación documental; no existe aún una suite de pruebas de aplicación.
+“Completado y probado” en esta fase significa que se verificaron los entregables documentales o de configuración descritos. No implica que se hayan probado flujos de aplicación o emuladores. En el Día 8 se confirmó la aplicación de la configuración de proveedor mediante un despliegue exitoso; los flujos de cliente se probarán cuando exista la app.
 
 ## Siguiente jornada
 
-**Día 9 — Implementar registro e inicio de sesión en local.** Los flujos se dirigirán al Authentication Emulator cuando el runtime esté disponible. La activación del proveedor en un proyecto real puede esperar hasta contar con su ID y acceso autorizado.
+**Día 9 — Implementar registro e inicio de sesión en local.** El proyecto de desarrollo ya tiene correo/contraseña habilitado. Los flujos deben dirigirse al Authentication Emulator cuando el runtime esté disponible.
 
 ## Pendientes y bloqueos conocidos
 
-- No hay aplicación cliente ni despliegue de Firebase App Hosting. El alias `dev` apunta al proyecto real indicado por el propietario, pero la sesión CLI requiere reautenticación antes de desplegar Auth.
+- No hay aplicación cliente ni despliegue de Firebase App Hosting. El emulador no se ha iniciado y los flujos de Auth no se han probado desde un cliente.
 - No se verificó el arranque de Authentication Emulator: el comando para consultar la versión de Java no terminó dentro del tiempo disponible. Se requiere comprobar un JDK compatible antes de ejecutar el emulador.
 - Las reglas de Firestore y Storage son deny-all temporales. Las reglas multiempresa completas corresponden a la fase de seguridad.
 - El Emulator Suite aún no se ejecuta; para iniciarlo se necesita Node.js/npm, Firebase CLI y Java JDK 11 o superior.

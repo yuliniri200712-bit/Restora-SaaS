@@ -1,13 +1,13 @@
 # Configuración de Firebase Authentication
 
 **Jornada:** Día 8 — configurar Firebase Authentication
-**Estado:** configuración versionada para desarrollo; sin aplicación cliente y pendiente de despliegue.
+**Estado:** proveedor correo/contraseña desplegado al proyecto de desarrollo; sin aplicación cliente ni flujos implementados.
 
 ## Proveedor configurado
 
 `firebase.json` declara `auth.providers.emailPassword: true`. Correo y contraseña cubre el requisito aprobado de registro, inicio de sesión y recuperación de contraseña. No se habilitan proveedores sociales ni autenticación anónima: no están solicitados y la compra como invitado continúa pendiente de decisión.
 
-La configuración como código está respaldada por Firebase CLI. El Project ID real de desarrollo indicado por el propietario es `restora-demo`, registrado como alias `dev`; `demo-restora-saas` se mantiene predeterminado para emuladores. Firebase documenta aplicar proveedores con `firebase deploy --only auth`; el comando pendiente es `firebase deploy --only auth --project dev`. No se ejecutó porque la sesión local de Firebase CLI requiere reautenticación.
+La configuración como código está respaldada por Firebase CLI. El Project ID real de desarrollo indicado por el propietario es `restora-demo`, registrado como alias `dev`; `demo-restora-saas` se mantiene predeterminado para emuladores. El 5 de noviembre de 2026, `firebase deploy --only auth --project dev` finalizó correctamente y confirmó correo/contraseña habilitado. Al aprovisionar Auth, Firebase CLI creó una “Default Web App” en el proyecto; no se añadió código cliente ni se desplegó Firebase App Hosting.
 
 ## Uso local
 
@@ -19,9 +19,9 @@ La configuración como código está respaldada por Firebase CLI. El Project ID 
 
 ## Límites y siguientes pasos
 
-- Esta jornada declara el proveedor para su aplicación posterior; no implementa pantallas ni lógica de registro, inicio de sesión o recuperación. Eso corresponde a los Días 9–10.
+- Esta jornada configura el proveedor; no implementa pantallas ni lógica de registro, inicio de sesión o recuperación. Eso corresponde a los Días 9–10.
 - No se definieron políticas específicas de contraseña, verificación obligatoria de correo, MFA o inicio de sesión social. Deben decidirse antes de habilitar esos flujos.
-- No se han creado usuarios reales, claves ni credenciales de servicio; tampoco se ha desplegado App Hosting.
+- No se han creado usuarios reales, claves ni credenciales de servicio; tampoco se ha desplegado App Hosting. La app web predeterminada creada por la CLI es solo un registro/configuración de Firebase, no el código de la tienda Next.js.
 - No confíes en que autenticación por sí sola autoriza acceso al tenant. Roles, membresías y permisos se configuran y validan por backend y Security Rules en sus jornadas correspondientes.
 
 ## Referencias oficiales
