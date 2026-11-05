@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.firebase/
+emulator-data/
+firebase-debug.log
+firestore-debug.log
+*.log
+.env
+.env.*.local

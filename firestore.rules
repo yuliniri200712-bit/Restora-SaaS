@@ -1,0 +1,10 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Baseline for Day 6: deny everything until tenant-aware rules are implemented.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
