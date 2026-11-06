@@ -1,7 +1,7 @@
 # Firebase Authentication
 
 **Jornadas:** Día 8 — configuración; Día 9 — registro e inicio de sesión; Día 10 — recuperación de contraseña.
-**Estado:** proveedor correo/contraseña habilitado en `restora-demo`; flujos cliente implementados para desarrollo local con Authentication Emulator. La validación manual del enlace de recuperación está pendiente.
+**Estado:** proveedor correo/contraseña habilitado en `restora-demo`; flujos cliente implementados para desarrollo local con Authentication Emulator. El propietario confirmó manualmente la recuperación de contraseña con un enlace del emulador.
 
 ## Proveedor y proyecto
 
@@ -44,7 +44,7 @@ El emulador no envía correos reales. La cuenta y sus datos de prueba se guardan
 - El formulario valida el correo, lo normaliza y solicita el enlace mediante `sendPasswordResetEmail` del Firebase Web SDK, configurando el idioma de correo como español.
 - La respuesta de la interfaz es genérica para que un correo inexistente no se pueda distinguir del existente. Los errores de validación o de servicio se muestran en español.
 - En Authentication Emulator no se manda correo real: toma el enlace de acción de la salida de la terminal del emulador y úsalo para completar el cambio de contraseña.
-- La implementación pasó `npm run lint` y `npm run typecheck`. No se ejecutó build ni se hizo validación funcional manual del enlace en esta jornada.
+- La implementación pasó `npm run lint` y `npm run typecheck`. El propietario confirmó que abrió el enlace del emulador con una contraseña nueva y completó el flujo. No se ejecutó build para evitar interferir con el servidor local y `.next`.
 
 ## Límites de esta jornada
 
