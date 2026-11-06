@@ -2,9 +2,421 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Baseline for Day 6: deny everything until tenant-aware rules are implemented.
-    match /{document=**} {
-      allow read, write: if false;
+    // No catch-all allow: every unmatched document path remains denied.
+    function signedIn() {
+      return request.auth != null;
     }
+
+    function membershipPath(restaurantId) {
+      return /databases/$(database)/documents/restaurants/$(restaurantId)/memberships/$(request.auth.uid);
+    }
+
+    function hasActiveMembership(restaurantId) {
+      return signedIn()
+        && exists(membershipPath(restaurantId))
+        && get(membershipPath(restaurantId)).data.status == 'active';
+    }
+
+    function membershipData(restaurantId) {
+      return get(membershipPath(restaurantId)).data;
+    }
+
+    function hasTenantPermission(restaurantId, permission) {
+      let membership = membershipData(restaurantId);
+      let delegatedPermissions = membership.get('permissions', []);
+
+      return hasActiveMembership(restaurantId)
+        && (
+          (
+            membership.role == 'owner'
+            && permission in [
+              'restaurant.read',
+              'restaurant.update',
+              'members.read',
+              'members.manage',
+              'branches.list',
+              'branches.read',
+              'branches.manage',
+              'catalog.read',
+              'catalog.manage',
+              'orders.read',
+              'orders.manage',
+              'inventory.read',
+              'inventory.manage',
+              'customers.read',
+              'reports.read',
+              'settings.manage',
+              'subscription.read',
+              'subscription.manage'
+            ]
+          )
+          || (
+            membership.role in ['administrator', 'employee']
+            && delegatedPermissions is list
+            && permission in delegatedPermissions
+            && permission in [
+              'restaurant.read',
+              'restaurant.update',
+              'members.read',
+              'branches.list',
+              'branches.read',
+              'branches.manage',
+              'catalog.read',
+              'catalog.manage',
+              'orders.read',
+              'orders.manage',
+              'inventory.read',
+              'inventory.manage',
+              'customers.read',
+              'reports.read',
+              'settings.manage'
+            ]
+          )
+          || (
+            membership.role == 'kitchen'
+            && permission in [
+              'kitchen.orders.readAssigned',
+              'kitchen.orders.updateAssigned'
+            ]
+          )
+          || (
+            membership.role == 'delivery'
+            && permission in [
+              'delivery.orders.readAssigned',
+              'delivery.orders.updateAssigned'
+            ]
+          )
+        );
+    }
+
+    function hasBranchAccess(restaurantId, branchId) {
+      let membership = membershipData(restaurantId);
+      let branchIds = membership.get('branchIds', []);
+
+      return hasActiveMembership(restaurantId)
+        && (
+          membership.branchAccess == 'all'
+          || (
+            membership.branchAccess == 'selected'
+            && branchIds is list
+            && branchId in branchIds
+          )
+        );
+    }
+
+    function hasAnyBranchAccess(restaurantId) {
+      let membership = membershipData(restaurantId);
+      let branchIds = membership.get('branchIds', []);
+
+      return hasActiveMembership(restaurantId)
+        && (
+          membership.branchAccess == 'all'
+          || (
+            membership.branchAccess == 'selected'
+            && branchIds is list
+            && branchIds.size() > 0
+          )
+        );
+    }
+
+    function hasCurrentDeliveryAssignment(restaurantId, orderId, orderData) {
+      let currentAssignmentId = orderData.get('currentDeliveryAssignmentId', '');
+      let branchId = orderData.get('branchId', '');
+
+      return signedIn()
+        && currentAssignmentId is string
+        && currentAssignmentId.size() > 0
+        && exists(/databases/$(database)/documents/restaurants/$(restaurantId)/deliveryAssignments/$(currentAssignmentId))
+        && get(/databases/$(database)/documents/restaurants/$(restaurantId)/deliveryAssignments/$(currentAssignmentId)).data.orderId == orderId
+        && get(/databases/$(database)/documents/restaurants/$(restaurantId)/deliveryAssignments/$(currentAssignmentId)).data.branchId == branchId
+        && get(/databases/$(database)/documents/restaurants/$(restaurantId)/deliveryAssignments/$(currentAssignmentId)).data.courierUid == request.auth.uid
+        && branchId is string
+        && hasBranchAccess(restaurantId, branchId);
+    }
+
+    function canReadOrderHeader(restaurantId, orderId, orderData) {
+      let branchId = orderData.get('branchId', '');
+
+      return signedIn()
+        && (
+          orderData.get('customerUid', '') == request.auth.uid
+          || (
+            hasTenantPermission(restaurantId, 'orders.read')
+            && branchId is string
+            && hasBranchAccess(restaurantId, branchId)
+          )
+          || (
+            hasTenantPermission(restaurantId, 'delivery.orders.readAssigned')
+            && hasCurrentDeliveryAssignment(restaurantId, orderId, orderData)
+          )
+        );
+    }
+
+    function canReadKitchenOrderDetails(restaurantId, orderId, orderData) {
+      let branchId = orderData.get('branchId', '');
+
+      return hasTenantPermission(restaurantId, 'kitchen.orders.readAssigned')
+        && orderData.get('kitchenUid', '') == request.auth.uid
+        && branchId is string
+        && hasBranchAccess(restaurantId, branchId);
+    }
+
+    function canReadOrderDetails(restaurantId, orderId, orderData) {
+      return canReadOrderHeader(restaurantId, orderId, orderData)
+        || canReadKitchenOrderDetails(restaurantId, orderId, orderData);
+    }
+
+    function canReadOrderHeaderById(restaurantId, orderId) {
+      let orderPath = /databases/$(database)/documents/restaurants/$(restaurantId)/orders/$(orderId);
+
+      return exists(orderPath)
+        && canReadOrderHeader(restaurantId, orderId, get(orderPath).data);
+    }
+
+    function canReadOrderDetailsById(restaurantId, orderId) {
+      let orderPath = /databases/$(database)/documents/restaurants/$(restaurantId)/orders/$(orderId);
+
+      return exists(orderPath)
+        && canReadOrderDetails(restaurantId, orderId, get(orderPath).data);
+    }
+
+    function canReadDeliveryAssignment(restaurantId, assignmentData) {
+      let branchId = assignmentData.get('branchId', '');
+
+      return signedIn()
+        && (
+          (
+            hasTenantPermission(restaurantId, 'delivery.orders.readAssigned')
+            && assignmentData.get('courierUid', '') == request.auth.uid
+            && branchId is string
+            && hasBranchAccess(restaurantId, branchId)
+          )
+          || (
+            hasTenantPermission(restaurantId, 'orders.read')
+            && branchId is string
+            && hasBranchAccess(restaurantId, branchId)
+          )
+        );
+    }
+
+    function isPublishedRestaurant(restaurantId) {
+      let restaurantPath = /databases/$(database)/documents/publicRestaurants/$(restaurantId);
+
+      return exists(restaurantPath)
+        && get(restaurantPath).data.published == true;
+    }
+
+    function isPublishedProduct(restaurantId, productId) {
+      let productPath = /databases/$(database)/documents/publicRestaurants/$(restaurantId)/products/$(productId);
+
+      return isPublishedRestaurant(restaurantId)
+        && exists(productPath)
+        && get(productPath).data.published == true;
+    }
+
+    function hasPlatformPermission(permission) {
+      let rolePath = /databases/$(database)/documents/platformRoles/$(request.auth.uid);
+      let roleData = get(rolePath).data;
+      let permissions = roleData.get('permissions', []);
+
+      return signedIn()
+        && exists(rolePath)
+        && roleData.role == 'superadmin'
+        && roleData.status == 'active'
+        && permissions is list
+        && permission in permissions;
+    }
+
+    match /users/{userId} {
+      allow get: if signedIn() && request.auth.uid == userId;
+      allow list: if false;
+
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['displayName', 'createdAt', 'updatedAt'])
+        && request.resource.data.keys().hasAll(['displayName', 'createdAt', 'updatedAt'])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 80
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'updatedAt'])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 80
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+
+      match /addresses/{addressId} {
+        allow get, list: if signedIn() && request.auth.uid == userId;
+      }
+
+      match /devices/{deviceId} {
+        allow get, list: if signedIn() && request.auth.uid == userId;
+      }
+
+      match /notifications/{notificationId} {
+        allow get, list: if signedIn() && request.auth.uid == userId;
+      }
+    }
+
+    match /publicRestaurants/{restaurantId} {
+      allow get, list: if resource.data.published == true;
+
+      match /products/{productId} {
+        allow get, list: if isPublishedProduct(restaurantId, productId);
+
+        match /variantGroups/{groupId} {
+          allow get, list: if isPublishedProduct(restaurantId, productId);
+
+          match /options/{optionId} {
+            allow get, list: if isPublishedProduct(restaurantId, productId);
+          }
+        }
+
+        match /addOnGroups/{groupId} {
+          allow get, list: if isPublishedProduct(restaurantId, productId);
+
+          match /options/{optionId} {
+            allow get, list: if isPublishedProduct(restaurantId, productId);
+          }
+        }
+      }
+    }
+
+    match /restaurants/{restaurantId} {
+      allow get: if hasTenantPermission(restaurantId, 'restaurant.read');
+
+      match /memberships/{userId} {
+        allow get: if signedIn() && request.auth.uid == userId;
+      }
+
+      match /branches/{branchId} {
+        allow get: if hasTenantPermission(restaurantId, 'branches.read')
+          && hasBranchAccess(restaurantId, branchId);
+        allow list: if hasTenantPermission(restaurantId, 'branches.list')
+          && hasBranchAccess(restaurantId, branchId);
+
+        match /productStates/{productId} {
+          allow get, list: if hasTenantPermission(restaurantId, 'catalog.read')
+            && hasBranchAccess(restaurantId, branchId);
+        }
+
+        match /deliveryZones/{zoneId} {
+          allow get, list: if hasTenantPermission(restaurantId, 'branches.read')
+            && hasBranchAccess(restaurantId, branchId);
+        }
+
+        match /inventoryItems/{inventoryItemId} {
+          allow get, list: if hasTenantPermission(restaurantId, 'inventory.read')
+            && hasBranchAccess(restaurantId, branchId);
+
+          match /movements/{movementId} {
+            allow get, list: if hasTenantPermission(restaurantId, 'inventory.read')
+              && hasBranchAccess(restaurantId, branchId);
+          }
+        }
+      }
+
+      match /categories/{categoryId} {
+        allow get, list: if hasTenantPermission(restaurantId, 'catalog.read')
+          && hasAnyBranchAccess(restaurantId);
+      }
+
+      match /products/{productId} {
+        allow get, list: if hasTenantPermission(restaurantId, 'catalog.read')
+          && hasAnyBranchAccess(restaurantId);
+
+        match /variantGroups/{groupId} {
+          allow get, list: if hasTenantPermission(restaurantId, 'catalog.read')
+            && hasAnyBranchAccess(restaurantId);
+
+          match /options/{optionId} {
+            allow get, list: if hasTenantPermission(restaurantId, 'catalog.read')
+              && hasAnyBranchAccess(restaurantId);
+          }
+        }
+
+        match /addOnGroups/{groupId} {
+          allow get, list: if hasTenantPermission(restaurantId, 'catalog.read')
+            && hasAnyBranchAccess(restaurantId);
+
+          match /options/{optionId} {
+            allow get, list: if hasTenantPermission(restaurantId, 'catalog.read')
+              && hasAnyBranchAccess(restaurantId);
+          }
+        }
+      }
+
+      match /promotions/{promotionId} {
+        allow get, list: if hasTenantPermission(restaurantId, 'catalog.read')
+          && hasAnyBranchAccess(restaurantId);
+      }
+
+      match /orders/{orderId} {
+        allow get, list: if canReadOrderHeader(restaurantId, orderId, resource.data);
+
+        match /items/{lineId} {
+          allow get, list: if canReadOrderDetailsById(restaurantId, orderId);
+        }
+
+        match /events/{eventId} {
+          allow get, list: if canReadOrderHeaderById(restaurantId, orderId);
+        }
+      }
+
+      match /kitchenTasks/{taskId} {
+        allow get, list: if signedIn()
+          && (
+            (
+              hasTenantPermission(restaurantId, 'kitchen.orders.readAssigned')
+              && resource.data.get('kitchenUid', '') == request.auth.uid
+            )
+            || (
+              hasTenantPermission(restaurantId, 'orders.read')
+              && resource.data.get('branchId', '') is string
+              && hasBranchAccess(restaurantId, resource.data.branchId)
+            )
+          )
+          && resource.data.get('branchId', '') is string
+          && hasBranchAccess(restaurantId, resource.data.branchId);
+      }
+
+      match /deliveryAssignments/{assignmentId} {
+        allow get, list: if canReadDeliveryAssignment(restaurantId, resource.data);
+
+        match /events/{eventId} {
+          allow get, list: if exists(/databases/$(database)/documents/restaurants/$(restaurantId)/deliveryAssignments/$(assignmentId))
+            && canReadDeliveryAssignment(
+              restaurantId,
+              get(/databases/$(database)/documents/restaurants/$(restaurantId)/deliveryAssignments/$(assignmentId)).data
+            );
+        }
+      }
+
+      match /customers/{userId} {
+        allow get: if signedIn() && request.auth.uid == userId;
+      }
+
+      match /subscriptions/{subscriptionId} {
+        allow get, list: if hasTenantPermission(restaurantId, 'subscription.read');
+      }
+
+      match /planRequests/{requestId} {
+        allow get, list: if hasTenantPermission(restaurantId, 'subscription.read');
+      }
+    }
+
+    match /platformAuditEvents/{eventId} {
+      allow get, list: if hasPlatformPermission('platform.audit.read');
+    }
+
+    // No client access to platform roles/configuration, payments, tenant audit,
+    // notifications, reservations, or operation receipts. Cloud Functions use
+    // Admin SDK and must enforce authorization in their own code.
   }
 }

@@ -1,13 +1,13 @@
 # Estado de tareas de Restora
 
 **Actualizado:** 2026-11-06
-**Fase actual:** Fase 2 — Autenticación y permisos (Días 8–14); siguiente jornada: Día 13
+**Fase actual:** Fase 2 — Autenticación y permisos (Días 8–14); siguiente jornada: Día 14
 **Rama Git:** `main`
 **Sincronización:** por instrucción del propietario, crear un commit y hacer push a GitHub al cerrar cada jornada; informar los archivos subidos.
 
 ## Estado general
 
-La Fase 1 está cerrada. El Día 8 configuró el proveedor correo/contraseña en Firebase Authentication para el Project ID de desarrollo `restora-demo` usando el alias `dev`; `demo-restora-saas` sigue como predeterminado de los emuladores. Firebase CLI creó una “Default Web App”. El Día 9 incorporó una aplicación Next.js con registro, inicio/cierre de sesión y Firebase Web SDK. El propietario confirmó que pudo registrar la cuenta en Authentication Emulator y luego iniciar sesión en la app. El Día 10 implementó recuperación de contraseña en `/recuperar-contrasena`, confirmada manualmente por el propietario. El Día 11 implementó nombre visible al registrarse y edición del perfil propio en `/cuenta`, guardados en Firebase Authentication; el propietario confirmó que revisó ambos flujos y funcionan correctamente. El Día 12 definió la matriz base aprobada de roles e implementó resolución de acceso y verificadores reutilizables en Cloud Functions; no hay aún restaurantes ni membresías asignadas. No se desplegaron Functions ni la web a Firebase real. Firestore Rules siguen deny-all y no hay suite de pruebas automatizadas.
+La Fase 1 está cerrada. El Día 8 configuró el proveedor correo/contraseña en Firebase Authentication para el Project ID de desarrollo `restora-demo` usando el alias `dev`; `demo-restora-saas` sigue como predeterminado de los emuladores. Firebase CLI creó una “Default Web App”. El Día 9 incorporó una aplicación Next.js con registro, inicio/cierre de sesión y Firebase Web SDK. El propietario confirmó que pudo registrar la cuenta en Authentication Emulator y luego iniciar sesión en la app. El Día 10 implementó recuperación de contraseña en `/recuperar-contrasena`, confirmada manualmente por el propietario. El Día 11 implementó nombre visible al registrarse y edición del perfil propio en `/cuenta`, guardados en Firebase Authentication; el propietario confirmó que revisó ambos flujos y funcionan correctamente. El Día 12 definió la matriz base aprobada de roles e implementó resolución de acceso y verificadores reutilizables en Cloud Functions; no hay aún restaurantes ni membresías asignadas. El Día 13 reemplazó el deny-all de Firestore por reglas locales con lecturas por UID, tenant, permisos, sede y asignaciones; las mutaciones de datos de negocio siguen reservadas a Functions. No se desplegaron Functions, reglas ni web a Firebase real. La matriz de reglas todavía no se ha probado en el emulador; corresponde al Día 14.
 
 ## Progreso por jornada
 
@@ -25,23 +25,24 @@ La Fase 1 está cerrada. El Día 8 configuró el proveedor correo/contraseña en
 | 10 | Implementar recuperación de contraseña con Firebase Authentication y mostrar instrucciones para obtener el enlace local del emulador. | **COMPLETADO Y PROBADO MANUALMENTE** | Pasaron `npm run lint` y `npm run typecheck`. El propietario confirmó que abrió el enlace de recuperación del Authentication Emulator con una contraseña nueva y el flujo funcionó. No se ejecutó build para evitar interferir con el servidor local y `.next`. No se conectó al Firebase real. |
 | 11 | Crear gestión básica del perfil propio: solicitar nombre al registrarse y permitir editarlo desde la cuenta. | **COMPLETADO Y PROBADO MANUALMENTE** | Pasaron `npm run lint` y `npm run typecheck`. El propietario confirmó que revisó el registro con nombre visible y la edición desde `/cuenta`; ambos funcionan. El nombre se guarda como `displayName` en Firebase Authentication. No se ejecutó build ni se modificaron reglas deny-all; roles, membresías y perfiles Firestore quedan en jornadas posteriores. |
 | 12 | Definir e implementar autorización base por rol, tenant y sede; separar superadministración. | **COMPLETADO; VERIFICACIÓN ESTÁTICA** | La matriz de siete actores fue aprobada por el propietario. Pasaron `npm run lint`, `npm run typecheck`, `npm --prefix functions run build`, validación JSON y `git diff --check`. Se agregaron resolución de permisos y verificadores autenticados en Cloud Functions. Firestore Rules siguen deny-all; no existen aún datos de restaurantes/membresías para un flujo runtime. No se desplegó a Firebase real. |
+| 13 | Configurar Firestore Security Rules tenant-aware. | **COMPLETADO; PENDIENTE DE PRUEBAS RUNTIME** | `firestore.rules` limita lecturas por UID, membresía activa, permisos, sede y asignación; permite lectura pública solo de proyecciones publicadas; las escrituras de negocio quedan denegadas al cliente. Se especificó `kitchenTasks` sin PII porque Rules no oculta campos de un documento. Se revisaron las rutas contra `docs/FIREBASE_STRUCTURE.md`; `git diff --check` pasó. `firebase --version` reportó 15.30.2. No se ejecutaron pruebas de sintaxis/runtime en emulador ni se desplegaron reglas. |
 
 “Completado y probado” en esta fase significa que se verificaron los entregables documentales, de configuración, de código y los flujos manuales que la tabla describe. En el Día 8 se confirmó la configuración del proveedor mediante un despliegue exitoso; en el Día 9 también se confirmó manualmente registro e inicio de sesión contra Authentication Emulator. Aún no hay pruebas automatizadas de autenticación.
 
 ## Siguiente jornada
 
-**Día 13 — Configurar Firestore Security Rules tenant-aware.** Esta jornada comienza cuando el propietario la solicite.
+**Día 14 — Probar autenticación, permisos y accesos no autorizados** con Firestore Emulator, incluyendo aislamiento tenant/sede, roles delegados, asignaciones, consultas, perfil propio y rechazo de escrituras sensibles. No desplegar las reglas a Firebase real en esta jornada salvo instrucción explícita.
 
 ## Pendientes y bloqueos conocidos
 
 - No hay suite de pruebas automatizadas de Auth; el propietario validó manualmente registro, inicio/cierre de sesión, recuperación de contraseña y gestión del nombre visible contra Authentication Emulator.
 - No hay despliegue de Firebase App Hosting ni Cloud Functions; todavía no se crean perfiles completos, restaurantes o membresías en Firestore.
-- Las reglas de Firestore y Storage son deny-all temporales. Las reglas multiempresa completas corresponden a la fase de seguridad.
+- `firestore.rules` ya tiene permisos tenant-aware locales; falta probar sintaxis/runtime y casos permitidos/denegados en el Día 14. `storage.rules` permanece deny-all hasta su jornada de seguridad.
 - Authentication Emulator ya se inició y se probó manualmente. Firestore y Storage emulators todavía no se han iniciado; se requiere Node.js/npm, Firebase CLI y Java JDK compatible.
 - Siguen pendientes compra como invitado, política de suscripciones activas y conservación/borrado de datos según `docs/DATABASE_SCHEMA.md` y `docs/PROJECT_REQUIREMENTS.md`.
 - No hay suite de pruebas automatizadas todavía. En el Día 10 pasaron `npm run lint` y `npm run typecheck`; `npm run build` no se ejecutó para evitar interferir con el servidor local y `.next` del propietario. Los tres scripts habían pasado en el Día 9.
 - El Día 11 pasó lint y TypeScript y quedó validado manualmente por el propietario. No se ejecutó build para evitar interferir con `.next` del servidor local.
-- El Día 12 pasó lint, TypeScript, compilación de Functions y validación JSON. No se ejecutaron pruebas automatizadas ni un flujo runtime porque aún no hay membresías/datos de restaurante; la validación de Rules y permisos queda en los Días 13–14.
+- El Día 12 pasó lint, TypeScript, compilación de Functions y validación JSON. No se ejecutaron pruebas automatizadas ni flujo runtime porque aún no hay membresías/datos de restaurante. El Día 13 configuró reglas de Firestore sin prueba de emulador; el Día 14 verificará los casos de autorización y rechazo.
 
 ## Control de cambios
 

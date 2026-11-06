@@ -2,10 +2,10 @@
 
 **Producto:** plataforma SaaS multiempresa para restaurantes
 
-**Estado:** propuesta de estructura elaborada en el Día 5
+**Estado:** estructura propuesta del Día 5; reglas tenant-aware implementadas localmente en el Día 13, pendientes de pruebas de emulador del Día 14
 
 **Base:** `docs/DATABASE_SCHEMA.md` y arquitectura aprobada
-**Alcance:** nombres lógicos de colecciones, documentos, subcolecciones, consultas y límites de acceso. Este documento no crea recursos Firebase ni contiene reglas ejecutables.
+**Alcance:** nombres lógicos de colecciones, documentos, subcolecciones, consultas y límites de acceso. `firestore.rules` materializa una primera capa de lectura y protección; no crea recursos Firebase ni reemplaza autorización en Cloud Functions.
 
 ## 1. Convenciones
 
@@ -17,7 +17,7 @@
 - Los estados son valores controlados por el backend. Los clientes no escriben estados de pedidos, pagos, inventario o suscripciones.
 - Los arrays se reservan para listas cortas y acotadas. Historiales, listas que crecen y relaciones con acceso propio van en subcolecciones.
 - Precios y características vigentes de plan son configurables. Solicitudes, pedidos y pagos guardan snapshots de los importes y datos usados al confirmar.
-- El esquema es una propuesta documental. Todavía no existen colecciones, reglas, índices ni configuración Firebase en el repositorio.
+- La estructura de colecciones sigue siendo una propuesta documental: no crea colecciones ni índices en Firebase. Las reglas directas iniciales se mantienen en `firestore.rules`.
 
 ## 2. Árbol propuesto de colecciones
 
@@ -53,6 +53,7 @@
     /items/{lineId}
     /events/{eventId}
     /reservations/{reservationId}
+  /kitchenTasks/{taskId}
   /deliveryAssignments/{assignmentId}
     /events/{eventId}
   /subscriptions/{subscriptionId}
@@ -92,7 +93,7 @@
 | Ruta | Uso y campos principales | Acceso esperado |
 |---|---|---|
 | `restaurants/{restaurantId}` | Tenant: `name`, `slug`, `ownerUid`, `status`, datos públicos/privados separados, `mainBranchId`, `currentSubscriptionId`, `createdAt`, `updatedAt`. | Solo miembros autorizados y backend. No es la fuente de lectura pública del marketplace. |
-| `restaurants/{restaurantId}/memberships/{uid}` | `uid`, `role` (`owner`, `administrator`, `employee`, `kitchen`, `delivery`), `status`, `branchAccess` (`all` o `selected`), `branchIds`, permisos delegados y actor/fechas de cambios. | Solo backend administra membresías. Functions valida UID autenticado, rol, permiso, estado y alcance antes de una acción; Rules aplicará una segunda barrera en el Día 13. |
+| `restaurants/{restaurantId}/memberships/{uid}` | `uid`, `role` (`owner`, `administrator`, `employee`, `kitchen`, `delivery`), `status`, `branchAccess` (`all` o `selected`), `branchIds`, permisos delegados y actor/fechas de cambios. | Solo backend administra membresías. Functions valida UID autenticado, rol, permiso, estado y alcance antes de una acción; Rules aplica lectura propia como segunda barrera. |
 | `restaurants/{restaurantId}/branches/{branchId}` | Sede: nombre, código, dirección, ubicación, estado, horario y configuración local; `reservationTimeoutMinutes` (15 por defecto). | Miembros con acceso a esa sede y backend. Los cambios sensibles se auditan. |
 | `restaurants/{restaurantId}/branches/{branchId}/productStates/{productId}` | Disponibilidad, publicación local y precio opcional de un producto en esa sede. Solo existe cuando hay una excepción respecto al catálogo base. | Miembros con acceso a sede; cambios comerciales privilegiados por backend. |
 | `restaurants/{restaurantId}/branches/{branchId}/deliveryZones/{zoneId}` | Zona de cobertura, tarifa COP, regla de cobertura/geometría, estado y vigencia. Se mantiene por sede. | Lectura de personal autorizado; cambios por backend según permisos. Solo se publica la información necesaria para calcular o mostrar el domicilio. |
@@ -117,10 +118,11 @@ Los productos mantienen el catálogo base a nivel de restaurante. Las existencia
 
 | Ruta | Uso y campos principales | Acceso esperado |
 |---|---|---|
-| `restaurants/{restaurantId}/orders/{orderId}` | Pedido: `restaurantId`, `branchId`, `customerUid` opcional, snapshots de contacto/dirección, importes COP, método/estado de pago, estado de pedido, fechas y claves idempotentes. | Creación y cambios de estado por Functions; lectura limitada a cliente dueño, miembros con alcance y superadmin autorizado. |
+| `restaurants/{restaurantId}/orders/{orderId}` | Pedido: `restaurantId`, `branchId`, `customerUid` opcional, `kitchenUid` opcional y `currentDeliveryAssignmentId` opcional; snapshots de contacto/dirección, importes COP, método/estado de pago, estado de pedido, fechas y claves idempotentes. | Creación y cambios de estado por Functions; lectura limitada a cliente dueño, miembros con alcance y domiciliario asignado. Cocina no lee este documento completo porque incluye datos de contacto. |
 | `.../orders/{orderId}/items/{lineId}` | Una línea por documento: `productId`, nombre/precio snapshot, cantidad, opciones/adicionales snapshot y total de línea. | Solo se crea con el pedido por backend; lectura según el pedido. |
 | `.../orders/{orderId}/events/{eventId}` | Historial append-only de estados, actor, momento, origen y motivo. | Solo backend escribe; lectura autorizada al cliente y personal según campos permitidos. |
-| `restaurants/{restaurantId}/deliveryAssignments/{assignmentId}` | `orderId`, `branchId`, `courierUid`, estado y fechas de asignación/entrega. Campos para consultar asignaciones del domiciliario. | Backend escribe; Functions comprueba el courier asignado y la sede. |
+| `restaurants/{restaurantId}/kitchenTasks/{taskId}` | Proyección de preparación con `restaurantId`, `branchId`, `orderId`, `kitchenUid`, estado y detalles de preparación sin UID/datos de contacto/dirección/pago del cliente. | Functions crea y actualiza la proyección. Cocina lee únicamente tareas asignadas y dentro de su sede; personal con `orders.read` puede leer por sede. Escrituras solo por Functions. |
+| `restaurants/{restaurantId}/deliveryAssignments/{assignmentId}` | `orderId`, `branchId`, `courierUid`, estado y fechas de asignación/entrega. El pedido guarda `currentDeliveryAssignmentId` para apuntar a la asignación vigente. | Backend escribe; Functions comprueba el courier asignado y la sede. El cambio de asignación y del puntero del pedido debe ser atómico. |
 | `.../deliveryAssignments/{assignmentId}/events/{eventId}` | Historial append-only de asignación, aceptación, recogida y entrega con actor y timestamp. | Solo backend escribe; el domiciliario y personal autorizado leen según asignación/sede. |
 | `restaurants/{restaurantId}/customers/{uid}` | Relación tenant-cliente con datos operativos mínimos, sin copiar perfil global innecesariamente. | Solo cliente participante y personal autorizado. Sin acceso al historial de otros restaurantes. |
 
@@ -155,7 +157,7 @@ La búsqueda inicial usará filtros indexables, categoría, ciudad y campos norm
 
 ## 4. Reglas de autorización esperadas por ruta
 
-Este cuadro guía el diseño futuro de Security Rules; no reemplaza las reglas ejecutables del Día 13 ni la autorización de Functions.
+La matriz base aprobada se materializa parcialmente en las Security Rules descritas abajo; nunca reemplaza la autorización obligatoria de Cloud Functions.
 
 ### 4.1 Matriz base aprobada para el Día 12
 
@@ -173,12 +175,35 @@ Los IDs de permisos son explícitos y están centralizados en `functions/src/aut
 
 `getOwnRestaurantAccess` y `getOwnPlatformAccess` devuelven permisos para representar la interfaz, no para autorizar mutaciones. Toda callable que ejecute una acción debe usar los verificadores de backend `requireTenantPermission`, `requireAssignedTenantPermission`, `requireSelfPermission` o `requirePlatformPermission`, según corresponda. El verificador de recursos asignados comprueba además el UID asignado. Toda acción privilegiada de plataforma debe escribir su resultado con `recordPlatformAuditEvent`. La pertenencia y el rol se leen del documento de Firestore con el UID autenticado; el cliente no envía rol ni permisos efectivos. Cuando el alcance es `selected`, una consulta que liste sedes debe limitar resultados a `branchIds` del contexto autorizado. El Día 12 deja el núcleo listo; todavía no existen comandos de asignación de membresías ni acciones administrativas que lo consuman.
 
+### 4.2 Alcance aplicado en Security Rules (Día 13)
+
+`firestore.rules` permite lecturas directas solo donde los documentos y campos de alcance están definidos. La identidad y el estado activo se cargan desde `restaurants/{restaurantId}/memberships/{auth.uid}`; administrador/empleado requieren un permiso delegable almacenado allí; cocina y domicilio requieren permisos de asignación; la membresía se intersecta con `branchAccess` y `branchIds`. Ningún cliente puede escribir membresías, permisos, catálogo, pedidos, estados, inventario, movimientos, reservas, asignaciones, pagos, suscripciones, auditoría o recibos idempotentes. Esas operaciones corresponden a Functions que deben repetir las verificaciones con Admin SDK.
+
+| Ruta | Lectura cliente permitida | Escritura cliente |
+|---|---|---|
+| `users/{uid}` | `get` del documento propio; perfil con campos/timestamps acotados. | Crear/editar solo `displayName`; borrar denegado. |
+| `users/{uid}/addresses`, `devices`, `notifications` | Solo el usuario dueño. | Denegada hasta definir allowlist/flujo de servicio por cada dato. |
+| `publicRestaurants/**` | Solo proyecciones con `published == true`; productos y opciones requieren padre publicado. | Denegada. |
+| `restaurants/{rid}` | Documento propio del tenant según `restaurant.read`. | Denegada. |
+| `memberships/{uid}` | Solo documento de membresía cuyo ID coincide con el UID autenticado; sin listar equipo. | Denegada. |
+| `branches/{bid}` y datos locales | Permiso de módulo y sede `all` o incluida en `branchIds`. | Denegada. |
+| categorías/productos/opciones/promociones | `catalog.read` en membresía activa con acceso a una o más sedes; los estados de producto requieren acceso a la sede del path. | Denegada. |
+| pedidos, líneas e historial | Cliente autenticado solo si `customerUid` coincide; miembro con `orders.read` y sede; domiciliario solo con asignación vigente; cocina lee líneas asignadas y la proyección `kitchenTasks`, no el pedido completo. | Denegada. |
+| `inventoryItems` y `movements` | `inventory.read` y sede autorizada. | Denegada. |
+| `subscriptions` y `planRequests` | `subscription.read` (solo propietario con la matriz vigente). | Denegada. |
+| `platformAuditEvents` | Superadministrador activo con `platform.audit.read`. | Denegada. |
+| demás rutas | Denegada por ausencia de una regla permisiva. | Denegada. |
+
+Firestore Rules autoriza documentos completos, no oculta campos de un documento. Por eso cocina no recibe el pedido que contiene snapshot de dirección/contacto: Functions debe crear `kitchenTasks` como proyección de preparación sin PII. Functions también debe mantener `kitchenUid` en los pedidos y `currentDeliveryAssignmentId` apuntando a la asignación vigente; ningún cliente puede cambiarlos. La asignación del domiciliario se invalida si se reemplaza esa referencia. [Control de acceso a campos](https://firebase.google.com/docs/firestore/security/rules-fields)
+
+Las consultas cliente tienen que cumplir las mismas restricciones que la regla; Rules no filtra resultados, y un query potencialmente demasiado amplio se rechaza completo. Las reglas actuales se validarán contra casos permitidos y denegados en el Día 14 antes de despliegue. La consola/CLI todavía no desplegó estas reglas en `restora-demo` ni en otro proyecto. [Consultas seguras](https://firebase.google.com/docs/firestore/security/rules-query)
+
 | Datos | Anónimo | Cliente autenticado | Miembro tenant | Superadministrador |
 |---|---|---|---|---|
 | `publicRestaurants/**` publicados | Lectura | Lectura | Lectura | Lectura |
 | `users/{uid}` y sus subcolecciones | Denegado | Solo su UID | No por pertenecer al tenant | Acceso limitado por herramienta administrativa y auditoría |
 | `restaurants/{rid}` y datos privados | Denegado | Solo pedidos propios por flujo autorizado | Solo tenant y sedes autorizadas | Acceso de plataforma autorizado y auditado |
-| membresías, suscripciones y solicitudes | Denegado | Denegado | Solo resumen propio según rol | Lectura/gestión administrativa por backend |
+| membresías, suscripciones y solicitudes | Denegado | Solo su documento de membresía | Solo resumen propio; suscripción según permiso | Lectura/gestión administrativa por backend |
 | pedidos, inventario, reservas, pagos y auditoría | Denegado | Solo pedidos propios y campos permitidos | Lectura según rol/sede; escrituras privilegiadas por Functions | Acceso administrativo auditado |
 | `platformRoles`, `plans` editables, eventos webhook | Denegado | Denegado | Denegado | Backend y roles de plataforma autorizados |
 
@@ -230,7 +255,7 @@ El webhook verifica firma, proveedor, importe, moneda, referencia y estado antes
 5. **Suscripción vigente:** un solo `currentSubscriptionId` por restaurante; los registros pasados permanecen en `subscriptions`.
 6. **Retención:** no se elimina historial al expirar prueba. Retención legal, anonimización y borrado por solicitud quedan para la política de privacidad y la fase del piloto.
 
-La estructura de colecciones sigue siendo un diseño documental y todavía no se materializa en un proyecto Firebase real. El Día 6 agrega configuración únicamente local para Emulator Suite y reglas base de denegación total; no implementa el modelo de autorización descrito aquí. Los cambios posteriores a la estructura deben actualizar reglas, consultas e índices junto con ella.
+La estructura de colecciones sigue siendo un diseño documental y todavía no se materializa en un proyecto Firebase real. El Día 6 agregó configuración local de emuladores y reglas base deny-all; el Día 13 implementó reglas tenant-aware locales. El Día 14 probará reglas y consultas en el emulador. No se desplegaron estas reglas ni existen datos de prueba en Firebase real.
 
 ## 8. Límite de la jornada
 
