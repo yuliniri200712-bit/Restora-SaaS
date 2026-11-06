@@ -41,7 +41,7 @@ El emulador no envía correos reales. La cuenta y sus datos de prueba se guardan
 
 No se implementaron recuperación de contraseña (Día 10), perfiles en Firestore, tenant, membresías, roles, autorización en backend ni reglas de seguridad. `/cuenta` sirve para comprobar el estado cliente; no constituye una ruta protegida por autorización de servidor. No se desplegó Firebase App Hosting ni se creó un usuario de prueba en el proyecto real.
 
-El Authentication Emulator aún debe ejecutarse en una máquina con Java compatible para completar una prueba funcional del flujo. Las verificaciones estáticas de esta jornada se anotan en `TASKS.md`.
+El propietario confirmó la prueba manual: inició Authentication Emulator, vio la cuenta en su interfaz y pudo completar el inicio de sesión desde `/login`. No hay pruebas automatizadas de autenticación todavía; el historial de verificaciones está en `TASKS.md`.
 
 ## Referencias oficiales
 
