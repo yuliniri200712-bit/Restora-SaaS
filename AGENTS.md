@@ -6,12 +6,14 @@ Restora es una plataforma SaaS multiempresa para restaurantes, inicialmente diri
 
 En caso de contradicción, respeta las decisiones explícitas posteriores del propietario. En particular, la web se alojará en **Firebase App Hosting**; Vercel no forma parte del plan aprobado.
 
-## Estado conocido al Día 8
+## Estado conocido al Día 9
 
-- La fase actual es autenticación y permisos. Hay documentación y configuración local, pero todavía no hay aplicación Next.js, `package.json`, código de Cloud Functions ni suite de pruebas.
+- La fase actual es autenticación y permisos. El Día 9 creó una app Next.js App Router con TypeScript, Tailwind, ESLint, Firebase Web SDK y rutas `/registro`, `/login` y `/cuenta`. Lint, TypeScript, lockfile y build pasaron; el build se comprobó con un worker en OneDrive. No existe código de Cloud Functions ni suite de pruebas automatizadas.
 - `docs/PROJECT_REQUIREMENTS.md`, `docs/SYSTEM_ARCHITECTURE.md`, `docs/DATABASE_SCHEMA.md`, `docs/FIREBASE_STRUCTURE.md` y `docs/DEVELOPMENT_ENVIRONMENT.md` describen las decisiones y el alcance aprobados hasta el Día 6.
 - `firebase.json` configura emuladores locales de Auth, Firestore y Storage. `.firebaserc` mantiene `demo-restora-saas` como predeterminado y el alias `dev` apunta al Project ID `restora-demo`, indicado por el propietario. No hay datos de producto ni despliegues de la web.
-- `firebase.json` declara correo/contraseña como proveedor de Firebase Authentication y se desplegó correctamente al proyecto `dev`. La CLI creó una “Default Web App” para aprovisionar Auth; aún no hay código cliente ni flujos de aplicación.
+- `firebase.json` declara correo/contraseña como proveedor de Firebase Authentication y se desplegó correctamente al proyecto `dev`. La CLI creó una “Default Web App”. El Día 9 agregó los flujos de cliente, pero Authentication Emulator no se inició porque `java -version` no terminó dentro del límite de 4 segundos; no se probaron registro/inicio contra el emulador.
+- `.env.local` contiene la configuración local de la Web App y está excluida de Git. No muestres ni agregues su contenido al commit. Para desarrollo, el Project ID del cliente se fija en `demo-restora-saas` para coincidir con el proyecto predeterminado del Emulator Suite; el alias `dev` sigue apuntando a `restora-demo`.
+- No se desplegó la aplicación en Firebase App Hosting ni se creó un usuario en el proyecto Firebase real.
 - `firestore.rules` y `storage.rules` son reglas temporales de denegación total. No las relajes para que una función “parezca funcionar”; sustitúyelas por reglas revisadas y tenant-aware en la jornada de seguridad correspondiente.
 - El propietario aprobó una sede principal por restaurante, sedes adicionales condicionadas al plan Empresarial, inventario independiente por sede y el ciclo de reserva/consumo/liberación/reposición documentado en requisitos y esquema.
 

@@ -1,7 +1,7 @@
 # Entorno de desarrollo Firebase
 
 **Jornada:** Día 6 — configuración local de Firebase y del entorno de desarrollo
-**Estado:** Emulator Suite configurada; correo/contraseña de Auth desplegado al proyecto de desarrollo; sin web de producto ni App Hosting.
+**Estado:** Emulator Suite configurada; Auth de correo/contraseña habilitado en el proyecto de desarrollo; aplicación Next.js local iniciada en el Día 9; sin despliegue de App Hosting.
 
 ## Iniciar los emuladores
 
@@ -28,12 +28,13 @@ Detén el proceso con `Ctrl+C`. La configuración está en `firebase.json`; el a
 - `firebase.json` declara el proveedor de correo y contraseña; se aplicó correctamente al proyecto `restora-demo` mediante el alias `dev`. Firebase CLI creó una “Default Web App” al aprovisionar Auth. Authentication Emulator está configurado en el puerto 9099, pero aún no se ha iniciado. El emulador no envía correos reales: para verificar correo o restablecer contraseña genera enlaces locales en la salida del emulador.
 - Si se modifica la configuración de Auth, se puede volver a aplicar con `firebase deploy --only auth --project dev`. Mantén el alias predeterminado demo para emuladores.
 - Functions Emulator aún no está configurado porque no existe el directorio `functions/` ni código backend.
-- No se crean secretos ni archivos `.env`: todavía no hay aplicación cliente. Cuando se introduzcan, los valores locales deben mantenerse fuera de Git.
+- La aplicación cliente está en `src/`. `.env.local` contiene la configuración de la Web App de desarrollo y está excluida de Git; `.env.example` tiene solo marcadores de posición. No añadas archivos locales `.env` al repositorio.
+- Para ejecutar la app, inicia `firebase emulators:start --only auth` en una terminal y `npm run dev` en otra. El cliente se conecta al emulador de Auth en `127.0.0.1:9099` en desarrollo.
 - Firebase App Hosting sigue siendo el destino de alojamiento aprobado para la web. Esta configuración solo prepara desarrollo local; no crea un proyecto Firebase, no vincula una cuenta y no despliega servicios.
 
 ## Próximo paso de Firebase
 
-Al comenzar la app y las funciones, conectar sus SDKs a estos emuladores en desarrollo y completar reglas tenant-aware antes de habilitar lecturas/escrituras. Firebase App Hosting se configurará cuando el producto esté listo para el despliegue correspondiente.
+Al implementar Firestore y las funciones, conectar sus SDKs a estos emuladores en desarrollo y completar reglas tenant-aware antes de habilitar lecturas/escrituras. Firebase App Hosting se configurará cuando el producto esté listo para el despliegue correspondiente.
 
 ## Referencias
 
