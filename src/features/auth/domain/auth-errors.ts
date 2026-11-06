@@ -14,12 +14,6 @@ const firebaseMessages: Record<string, string> = {
     "Hubo demasiados intentos. Espera un momento antes de intentarlo de nuevo.",
   "auth/network-request-failed":
     "No fue posible conectar con Firebase. Verifica que Authentication Emulator esté iniciado.",
-  "functions/already-exists": "Ese alias ya está en uso. Prueba con otro.",
-  "functions/invalid-argument":
-    "El alias debe tener entre 3 y 20 caracteres, empezar con una letra y usar solo letras, números o guion bajo.",
-  "functions/unauthenticated": "Inicia sesión de nuevo para guardar tu alias.",
-  "functions/unavailable":
-    "El servicio de alias no está disponible. Inténtalo de nuevo.",
 };
 
 export class AuthValidationError extends Error {

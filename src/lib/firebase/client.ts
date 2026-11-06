@@ -1,14 +1,8 @@
 import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
 import { Auth, connectAuthEmulator, getAuth } from "firebase/auth";
-import {
-  connectFunctionsEmulator,
-  Functions,
-  getFunctions,
-} from "firebase/functions";
 
 type FirebaseRuntime = typeof globalThis & {
   __restoraAuthEmulatorConnections?: WeakSet<Auth>;
-  __restoraFunctionsEmulatorConnections?: WeakSet<Functions>;
 };
 
 function getFirebaseApp(): FirebaseApp {
@@ -62,25 +56,4 @@ export function getFirebaseAuth(): Auth {
   }
 
   return auth;
-}
-
-export function getFirebaseFunctions(): Functions {
-  const functions = getFunctions(getFirebaseApp(), "us-central1");
-  const useEmulator =
-    process.env.NODE_ENV !== "production" &&
-    process.env.NEXT_PUBLIC_USE_AUTH_EMULATOR !== "false";
-
-  if (useEmulator) {
-    const runtime = globalThis as FirebaseRuntime;
-    const connections =
-      runtime.__restoraFunctionsEmulatorConnections ?? new WeakSet<Functions>();
-    runtime.__restoraFunctionsEmulatorConnections = connections;
-
-    if (!connections.has(functions)) {
-      connectFunctionsEmulator(functions, "127.0.0.1", 5001);
-      connections.add(functions);
-    }
-  }
-
-  return functions;
 }

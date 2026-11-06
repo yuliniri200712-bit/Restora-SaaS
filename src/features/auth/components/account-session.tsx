@@ -10,10 +10,6 @@ import {
 } from "../application/auth.service";
 import { getAuthErrorMessage } from "../domain/auth-errors";
 import { AuthUser } from "../domain/auth-user";
-import {
-  getOwnAlias,
-  updateOwnAlias,
-} from "@/features/users/application/user-alias.service";
 
 export function AccountSession() {
   const router = useRouter();
@@ -23,41 +19,14 @@ export function AccountSession() {
   const [displayName, setDisplayName] = useState("");
   const [profileMessage, setProfileMessage] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [alias, setAlias] = useState("");
-  const [aliasMessage, setAliasMessage] = useState("");
-  const [isLoadingAlias, setIsLoadingAlias] = useState(true);
-  const [isSavingAlias, setIsSavingAlias] = useState(false);
 
   useEffect(() => {
-    let isCancelled = false;
-    const unsubscribe = subscribeToAuthChanges((currentUser) => {
+    return subscribeToAuthChanges((currentUser) => {
       setUser(currentUser);
       setDisplayName(currentUser?.displayName ?? "");
       setIsLoading(false);
-      if (!currentUser) {
-        setAlias("");
-        setIsLoadingAlias(false);
-        router.replace("/login");
-        return;
-      }
-
-      setIsLoadingAlias(true);
-      void getOwnAlias()
-        .then((profile) => {
-          if (!isCancelled) setAlias(profile.alias ?? "");
-        })
-        .catch((error: unknown) => {
-          if (!isCancelled) setErrorMessage(getAuthErrorMessage(error));
-        })
-        .finally(() => {
-          if (!isCancelled) setIsLoadingAlias(false);
-        });
+      if (!currentUser) router.replace("/login");
     });
-
-    return () => {
-      isCancelled = true;
-      unsubscribe();
-    };
   }, [router]);
 
   async function handleSignOut() {
@@ -86,23 +55,6 @@ export function AccountSession() {
       setErrorMessage(getAuthErrorMessage(error));
     } finally {
       setIsSavingProfile(false);
-    }
-  }
-
-  async function handleSaveAlias(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setErrorMessage("");
-    setAliasMessage("");
-    setIsSavingAlias(true);
-
-    try {
-      const savedAlias = await updateOwnAlias(alias);
-      setAlias(savedAlias.alias ?? "");
-      setAliasMessage("Tu alias único se guardó correctamente.");
-    } catch (error) {
-      setErrorMessage(getAuthErrorMessage(error));
-    } finally {
-      setIsSavingAlias(false);
     }
   }
 
@@ -170,39 +122,6 @@ export function AccountSession() {
           </button>
         </form>
         {profileMessage && <p className="profile-success" role="status">{profileMessage}</p>}
-        <h2 className="profile-heading">Alias único</h2>
-        <p className="profile-alias-hint">
-          Tu nombre visible puede repetirse; este alias identifica tu cuenta y es único en Restora.
-        </p>
-        <form className="profile-form" onSubmit={handleSaveAlias}>
-          <label className="field-label" htmlFor="account-alias">Alias</label>
-          <input
-            autoCapitalize="none"
-            autoComplete="username"
-            autoCorrect="off"
-            className="text-input"
-            disabled={isLoadingAlias || isSavingAlias}
-            id="account-alias"
-            maxLength={20}
-            minLength={3}
-            onChange={(event) => {
-              setAlias(event.target.value);
-              setAliasMessage("");
-              setErrorMessage("");
-            }}
-            pattern="[A-Za-z][A-Za-z0-9_]{2,19}"
-            placeholder="ej. andres_restora"
-            required
-            spellCheck={false}
-            type="text"
-            value={isLoadingAlias ? "" : alias}
-          />
-          <span className="field-hint">3–20 caracteres; letras, números y guion bajo.</span>
-          <button className="primary-button" disabled={isLoadingAlias || isSavingAlias} type="submit">
-            {isLoadingAlias ? "Cargando alias…" : isSavingAlias ? "Guardando…" : "Guardar alias"}
-          </button>
-        </form>
-        {aliasMessage && <p className="profile-success" role="status">{aliasMessage}</p>}
         {errorMessage && <p className="form-error" role="alert">{errorMessage}</p>}
         <Link className="text-link" href="/">Volver al inicio <span aria-hidden="true">→</span></Link>
       </section>

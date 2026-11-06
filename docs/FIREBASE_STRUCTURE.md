@@ -27,9 +27,6 @@
   /devices/{deviceId}
   /notifications/{notificationId}
 
-/userAliases/{normalizedAlias}
-/userAliasOwners/{uid}
-
 /platformRoles/{uid}
 /platformAuditEvents/{eventId}
 /appConfig/{configId}
@@ -83,16 +80,12 @@
 | `users/{uid}/addresses/{addressId}` | Direcciones guardadas por el cliente: etiqueta, dirección, notas, coordenadas y fechas. | Solo el usuario dueño y backend autorizado. Las copias usadas en pedidos van en snapshots del pedido. |
 | `users/{uid}/devices/{deviceId}` | Token FCM y metadatos mínimos del dispositivo. | El usuario puede registrar/eliminar su token mediante servicio; no es visible para otros usuarios. |
 | `users/{uid}/notifications/{notificationId}` | Avisos personales y estado de lectura. | Solo el usuario destinatario y backend. |
-| `userAliases/{normalizedAlias}` | Reserva global de alias normalizado a minúsculas; guarda solo el UID propietario y la fecha de reserva. | Solo Cloud Functions crea, consulta, reemplaza o libera reservas en una transacción. El cliente no accede directamente. |
-| `userAliasOwners/{uid}` | Mapea el UID autenticado a su alias actual para cargarlo y cambiarlo de forma segura. | Solo Cloud Functions; el UID siempre se deriva del token autenticado. |
 | `platformRoles/{uid}` | Rol global y estado de superadministrador, asignados por un proceso de servidor autorizado. | Lectura y cambio protegidos; ninguna asignación desde cliente. |
 | `platformAuditEvents/{eventId}` | Acciones globales sensibles, actor, recurso, resultado y fecha. | Solo backend escribe; superadministradores autorizados leen. |
 | `appConfig/{configId}` | Configuración global versionada, sin secretos en documentos públicos. | Solo superadministrador autorizado y backend. |
 | `plans/{planId}` | Nombre, estado, `currentVersionId`, código estable. | Lectura pública limitada a planes visibles; cambios solo por backend administrativo. |
 | `plans/{planId}/versions/{versionId}` | Precio COP, límites, capacidades, vigencia y snapshot de características. | Backend crea versiones; solicitudes y suscripciones guardan el ID de versión aplicado. |
 | `paymentWebhookEvents/{eventHash}` | Dedupe de webhooks por proveedor y evento; resultado de procesamiento y timestamps. | Solo Cloud Functions. `eventHash` se deriva de proveedor + ID de evento, sin incluir secretos. |
-
-Los alias se normalizan a minúsculas y admiten 3–20 caracteres: empiezan por una letra y continúan con letras ASCII, números o guion bajo. `claimOwnAlias` reclama el documento global y actualiza el mapa del UID en la misma transacción; si el alias pertenece a otra cuenta, no escribe nada. Al cambiar alias, libera el anterior dentro de esa transacción. Ninguna regla cliente se abre para permitir esta operación.
 
 ### 2.2 Raíz del restaurante y sedes
 

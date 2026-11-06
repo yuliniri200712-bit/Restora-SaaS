@@ -1,6 +1,5 @@
 node_modules/
 .next/
-functions/lib/
 *.tsbuildinfo
 .firebase/
 emulator-data/
