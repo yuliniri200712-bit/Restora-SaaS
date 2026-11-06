@@ -1,7 +1,7 @@
 # Firebase Authentication
 
 **Jornadas:** Día 8 — configuración; Día 9 — registro e inicio de sesión; Día 10 — recuperación de contraseña; Día 11 — perfil propio básico.
-**Estado:** proveedor correo/contraseña habilitado en `restora-demo`; flujos cliente implementados para desarrollo local con Authentication Emulator. El propietario confirmó recuperación de contraseña; el perfil propio del Día 11 espera validación manual.
+**Estado:** proveedor correo/contraseña habilitado en `restora-demo`; flujos cliente implementados para desarrollo local con Authentication Emulator. El propietario confirmó recuperación de contraseña y validó manualmente el registro con nombre visible y su edición desde `/cuenta`.
 
 ## Proveedor y proyecto
 
@@ -52,7 +52,7 @@ El emulador no envía correos reales. La cuenta y sus datos de prueba se guardan
 - `/cuenta` muestra el correo autenticado como dato de solo lectura y permite cambiar el nombre visible.
 - El nombre se guarda en `displayName` del usuario de Firebase Authentication. La app muestra una indicación para completar el perfil si no tiene nombre.
 - Esta entrega no asigna roles ni membresías, no crea perfiles `users/{uid}` en Firestore y no modifica las reglas temporales deny-all. La persistencia Firestore se añadirá cuando sus reglas estén preparadas.
-- Pasaron `npm run lint` y `npm run typecheck`. No se ejecutó build ni se modificó una cuenta del emulador; antes de cerrar la jornada falta probar el registro con nombre y su edición desde `/cuenta`.
+- Pasaron `npm run lint` y `npm run typecheck`. El propietario confirmó que revisó manualmente el registro con nombre y su edición desde `/cuenta`; ambos funcionan. No se ejecutó build para evitar interferir con `.next` del servidor local.
 
 ## Límites de esta jornada
 
