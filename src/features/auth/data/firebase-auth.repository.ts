@@ -1,6 +1,7 @@
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   User,
@@ -29,6 +30,12 @@ export class FirebaseAuthRepository implements AuthRepository {
       password,
     );
     return toAuthUser(credential.user);
+  }
+
+  async sendPasswordReset(email: string): Promise<void> {
+    const auth = getFirebaseAuth();
+    auth.languageCode = "es";
+    await sendPasswordResetEmail(auth, email);
   }
 
   async signOut(): Promise<void> {

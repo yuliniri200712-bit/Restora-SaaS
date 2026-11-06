@@ -96,6 +96,11 @@ export function AuthForm({ mode }: AuthFormProps) {
               type="password"
               value={password}
             />
+            {!isRegister && (
+              <div className="forgot-row">
+                <Link href="/recuperar-contrasena">¿Olvidaste tu contraseña?</Link>
+              </div>
+            )}
             {isRegister && (
               <>
                 <label className="field-label" htmlFor="register-confirmation">Confirma tu contraseña</label>

@@ -20,8 +20,9 @@ La app usa Authentication Emulator en desarrollo para que los registros de prueb
 - `/registro`: alta con correo y contraseña.
 - `/login`: inicio de sesión.
 - `/cuenta`: verificación de la sesión cliente y cierre de sesión.
+- `/recuperar-contrasena`: solicitud de enlace para restablecer la contraseña. En local, el enlace aparece en la terminal de Authentication Emulator; no se envía correo real.
 
-La recuperación de contraseña, perfiles de restaurante, tenants, roles, autorización de servidor y despliegue de App Hosting aún no están implementados.
+Los perfiles de restaurante, tenants, roles, autorización de servidor y despliegue de App Hosting aún no están implementados.
 
 ## Comandos
 

@@ -1,7 +1,7 @@
 # Firebase Authentication
 
-**Jornadas:** Día 8 — configuración; Día 9 — registro e inicio de sesión.
-**Estado:** proveedor correo/contraseña habilitado en `restora-demo`; aplicación cliente implementada para desarrollo local con Authentication Emulator.
+**Jornadas:** Día 8 — configuración; Día 9 — registro e inicio de sesión; Día 10 — recuperación de contraseña.
+**Estado:** proveedor correo/contraseña habilitado en `restora-demo`; flujos cliente implementados para desarrollo local con Authentication Emulator. La validación manual del enlace de recuperación está pendiente.
 
 ## Proveedor y proyecto
 
@@ -26,6 +26,7 @@ Se necesitan Node.js, npm, Firebase CLI y Java JDK 11 o superior para ejecutar e
 3. En otra terminal inicia Next.js: `npm run dev`.
 4. Abre `http://localhost:3000`, crea una cuenta de prueba y verifica el inicio/cierre de sesión. El usuario se crea solo en el emulador; no se crea en el Firebase real.
 5. La interfaz de Emulator Suite está en `http://127.0.0.1:4000`.
+6. Para comprobar recuperación, abre `/recuperar-contrasena`, solicita el enlace usando un correo registrado en el emulador y copia la URL de acción que aparece en la terminal donde ejecutaste `firebase emulators:start --only auth`. Abre esa URL para asignar una contraseña nueva. El emulador no envía correos reales.
 
 El emulador no envía correos reales. La cuenta y sus datos de prueba se guardan en el emulador, no en Firestore.
 
@@ -37,9 +38,17 @@ El emulador no envía correos reales. La cuenta y sus datos de prueba se guardan
 - Los errores comunes de Firebase se presentan en español. El mínimo de contraseña es 6 caracteres, conforme al proveedor de Firebase.
 - La inicialización de Firebase queda en `src/lib/firebase`; el repositorio y el servicio de Auth separan el SDK y la lógica del formulario.
 
+## Recuperación de contraseña — Día 10
+
+- `/login` ofrece el enlace “¿Olvidaste tu contraseña?” hacia `/recuperar-contrasena`.
+- El formulario valida el correo, lo normaliza y solicita el enlace mediante `sendPasswordResetEmail` del Firebase Web SDK, configurando el idioma de correo como español.
+- La respuesta de la interfaz es genérica para que un correo inexistente no se pueda distinguir del existente. Los errores de validación o de servicio se muestran en español.
+- En Authentication Emulator no se manda correo real: toma el enlace de acción de la salida de la terminal del emulador y úsalo para completar el cambio de contraseña.
+- La implementación pasó `npm run lint` y `npm run typecheck`. No se ejecutó build ni se hizo validación funcional manual del enlace en esta jornada.
+
 ## Límites de esta jornada
 
-No se implementaron recuperación de contraseña (Día 10), perfiles en Firestore, tenant, membresías, roles, autorización en backend ni reglas de seguridad. `/cuenta` sirve para comprobar el estado cliente; no constituye una ruta protegida por autorización de servidor. No se desplegó Firebase App Hosting ni se creó un usuario de prueba en el proyecto real.
+No se implementaron perfiles en Firestore, tenant, membresías, roles, autorización en backend ni reglas de seguridad. `/cuenta` sirve para comprobar el estado cliente; no constituye una ruta protegida por autorización de servidor. No se desplegó Firebase App Hosting ni se creó un usuario de prueba en el proyecto real.
 
 El propietario confirmó la prueba manual: inició Authentication Emulator, vio la cuenta en su interfaz y pudo completar el inicio de sesión desde `/login`. No hay pruebas automatizadas de autenticación todavía; el historial de verificaciones está en `TASKS.md`.
 
@@ -48,3 +57,4 @@ El propietario confirmó la prueba manual: inició Authentication Emulator, vio 
 - [Configurar proveedores de Authentication con Firebase CLI](https://firebase.google.com/docs/auth/configure-providers-cli)
 - [Conectar una app al Authentication Emulator](https://firebase.google.com/docs/emulator-suite/connect_auth)
 - [Autenticación con correo y contraseña en aplicaciones web](https://firebase.google.com/docs/auth/web/password-auth)
+- [Referencia Web SDK: `sendPasswordResetEmail`](https://firebase.google.com/docs/reference/js/auth#sendpasswordresetemail)

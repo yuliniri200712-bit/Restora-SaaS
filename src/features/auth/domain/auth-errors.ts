@@ -2,6 +2,7 @@ const firebaseMessages: Record<string, string> = {
   "auth/email-already-in-use":
     "Ya existe una cuenta con ese correo. Inicia sesión o usa otro correo.",
   "auth/invalid-email": "El correo no tiene un formato válido.",
+  "auth/missing-email": "Ingresa tu correo electrónico.",
   "auth/weak-password": "La contraseña debe tener al menos 6 caracteres.",
   "auth/invalid-credential": "El correo o la contraseña no son correctos.",
   "auth/wrong-password": "El correo o la contraseña no son correctos.",
@@ -22,15 +23,20 @@ export class AuthValidationError extends Error {
   }
 }
 
+export function getFirebaseAuthErrorCode(error: unknown): string | null {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return null;
+  }
+
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" ? code : null;
+}
+
 export function getAuthErrorMessage(error: unknown): string {
   if (error instanceof AuthValidationError) return error.message;
 
-  if (typeof error === "object" && error !== null && "code" in error) {
-    const code = (error as { code?: unknown }).code;
-    if (typeof code === "string" && firebaseMessages[code]) {
-      return firebaseMessages[code];
-    }
-  }
+  const code = getFirebaseAuthErrorCode(error);
+  if (code && firebaseMessages[code]) return firebaseMessages[code];
 
   return "No fue posible completar la operación. Inténtalo de nuevo.";
 }

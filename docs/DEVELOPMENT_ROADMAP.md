@@ -2,7 +2,7 @@
 
 **Duración:** 120 días
 **Fuente:** ruta aprobada del prompt maestro del proyecto
-**Estado al 2026-11-06:** Días 1–9 cerrados; el Día 9 pasó verificaciones estáticas y prueba manual de registro e inicio de sesión contra Authentication Emulator, confirmada por el propietario. Siguiente jornada: Día 10
+**Estado al 2026-11-06:** Días 1–10 cerrados; el Día 10 implementó recuperación de contraseña y pasó lint y TypeScript. Falta validar manualmente el enlace del emulador. Siguiente jornada: Día 11
 **Destino aprobado para la web:** Firebase App Hosting. Vercel queda excluido por decisión del propietario.
 
 Esta ruta se ejecuta una jornada por vez, a solicitud del propietario. El avance y las verificaciones reales se registran en `TASKS.md`. `[x]` indica jornada cerrada, `[~]` trabajo parcial y `[ ]` pendiente. Una marca no implica pruebas automatizadas si `TASKS.md` indica que no se ejecutaron.
@@ -21,7 +21,7 @@ Esta ruta se ejecuta una jornada por vez, a solicitud del propietario. El avance
 
 - [x] **Día 8:** Configurar Firebase Authentication y habilitar correo/contraseña en el proyecto de desarrollo `restora-demo`. La CLI creó una “Default Web App”; no se implementó ni desplegó la web de producto.
 - [x] **Día 9:** Implementar registro e inicio/cierre de sesión con Firebase Web SDK y cliente Next.js. Lint, TypeScript, lockfile y build pasan; el build usó un worker para evitar `EPERM` al escribir `.next` en OneDrive. El propietario confirmó manualmente que el registro aparece en Authentication Emulator y que puede iniciar sesión desde la app. No se conectó al Firebase real.
-- [ ] **Día 10:** Implementar recuperación de contraseña.
+- [x] **Día 10:** Implementar recuperación de contraseña desde `/login` y `/recuperar-contrasena`, usando Firebase Authentication. Pasaron lint y TypeScript; la validación manual del enlace del emulador queda pendiente y está documentada en `TASKS.md`.
 - [ ] **Día 11:** Crear gestión de usuarios.
 - [ ] **Día 12:** Implementar roles y permisos.
 - [ ] **Día 13:** Configurar Firestore Security Rules.

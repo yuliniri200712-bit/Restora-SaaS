@@ -1,19 +1,27 @@
 import { FirebaseAuthRepository } from "../data/firebase-auth.repository";
-import { AuthValidationError } from "../domain/auth-errors";
+import {
+  AuthValidationError,
+  getFirebaseAuthErrorCode,
+} from "../domain/auth-errors";
 import { AuthUser } from "../domain/auth-user";
 
 const repository = new FirebaseAuthRepository();
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function normalizeCredentials(email: string, password: string) {
+function normalizeEmail(email: string): string {
   const normalizedEmail = email.trim().toLowerCase();
-
   if (!normalizedEmail) {
     throw new AuthValidationError("Ingresa tu correo electrónico.");
   }
   if (!emailPattern.test(normalizedEmail)) {
     throw new AuthValidationError("Ingresa un correo electrónico válido.");
   }
+
+  return normalizedEmail;
+}
+
+function normalizeCredentials(email: string, password: string) {
+  const normalizedEmail = normalizeEmail(email);
   if (!password) throw new AuthValidationError("Ingresa tu contraseña.");
 
   return { email: normalizedEmail, password };
@@ -38,6 +46,21 @@ export async function signInAccount(
 ): Promise<AuthUser> {
   const credentials = normalizeCredentials(email, password);
   return repository.signIn(credentials.email, credentials.password);
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const normalizedEmail = normalizeEmail(email);
+
+  try {
+    await repository.sendPasswordReset(normalizedEmail);
+  } catch (error) {
+    const code = getFirebaseAuthErrorCode(error);
+    if (code === "auth/user-not-found" || code === "auth/user-disabled") {
+      return;
+    }
+
+    throw error;
+  }
 }
 
 export function signOutAccount(): Promise<void> {
