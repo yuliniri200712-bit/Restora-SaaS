@@ -1,7 +1,7 @@
 # Entorno de desarrollo Firebase
 
-**Jornada:** Día 6 — configuración local de Firebase y del entorno de desarrollo
-**Estado:** Emulator Suite configurada; Auth de correo/contraseña habilitado en el proyecto de desarrollo; aplicación Next.js local iniciada en el Día 9; sin despliegue de App Hosting.
+**Jornadas:** Día 6 — configuración local; Día 12 — Functions Emulator y autorización backend
+**Estado:** Emulator Suite configurada para Auth, Firestore, Storage y Functions; Auth de correo/contraseña habilitado en el proyecto de desarrollo; aplicación Next.js local; sin despliegue de App Hosting o Functions.
 
 ## Iniciar los emuladores
 
@@ -18,6 +18,7 @@ El alias predeterminado es `demo-restora-saas`. Firebase reconoce el prefijo `de
 | Emulator Suite UI | http://127.0.0.1:4000 |
 | Authentication | http://127.0.0.1:9099 |
 | Cloud Firestore | http://127.0.0.1:8080 |
+| Cloud Functions | http://127.0.0.1:5001 |
 | Cloud Storage | http://127.0.0.1:9199 |
 
 Detén el proceso con `Ctrl+C`. La configuración está en `firebase.json`; el alias de proyecto está en `.firebaserc`.
@@ -27,9 +28,11 @@ Detén el proceso con `Ctrl+C`. La configuración está en `firebase.json`; el a
 - Firestore y Storage cargan reglas temporales de denegación total (`firestore.rules` y `storage.rules`). Así, el entorno no queda abierto mientras se diseña la autorización multiempresa. Estas reglas no implementan todavía el acceso de clientes, miembros, sedes ni administradores y deben sustituirse antes de integrar flujos funcionales.
 - `firebase.json` declara el proveedor de correo y contraseña; se aplicó correctamente al proyecto `restora-demo` mediante el alias `dev`. Firebase CLI creó una “Default Web App” al aprovisionar Auth. Authentication Emulator está configurado en el puerto 9099 y el propietario lo inició para validar registro e inicio de sesión. El emulador no envía correos reales: para verificar correo o restablecer contraseña genera enlaces locales en la salida del emulador.
 - Si se modifica la configuración de Auth, se puede volver a aplicar con `firebase deploy --only auth --project dev`. Mantén el alias predeterminado demo para emuladores.
-- Functions Emulator aún no está configurado porque no existe el directorio `functions/` ni código backend.
+- Cloud Functions usa runtime Node.js 22. El Día 12 agregó `functions/` con verificadores de permisos y las callables `getOwnRestaurantAccess` y `getOwnPlatformAccess`; Functions Emulator usa el puerto 5001. No se desplegaron funciones al proyecto real.
+- Para ejecutar Auth, Firestore y Functions Emulator, instala las dependencias de la app y backend, ejecuta `npm --prefix functions run build` y arranca `firebase emulators:start --only auth,firestore,functions`. En otra terminal ejecuta `npm run dev`.
+- El acceso a Firestore continúa cerrado con reglas deny-all. La configuración del emulador no abre lecturas/escrituras; las reglas tenant-aware corresponden al Día 13.
 - La aplicación cliente está en `src/`. `.env.local` contiene la configuración de la Web App de desarrollo y está excluida de Git; `.env.example` tiene solo marcadores de posición. No añadas archivos locales `.env` al repositorio.
-- Para ejecutar la app, inicia `firebase emulators:start --only auth` en una terminal y `npm run dev` en otra. El cliente se conecta al emulador de Auth en `127.0.0.1:9099` en desarrollo.
+- El cliente de esta jornada se conecta al emulador de Auth en `127.0.0.1:9099`; las callables se conectarán desde sus repositorios cliente cuando haya flujos de restaurante. Ningún flujo de permisos se conecta al Firebase real.
 - Firebase App Hosting sigue siendo el destino de alojamiento aprobado para la web. Esta configuración solo prepara desarrollo local; no crea un proyecto Firebase, no vincula una cuenta y no despliega servicios.
 
 ## Próximo paso de Firebase

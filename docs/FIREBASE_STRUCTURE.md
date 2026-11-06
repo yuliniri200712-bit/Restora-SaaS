@@ -80,7 +80,7 @@
 | `users/{uid}/addresses/{addressId}` | Direcciones guardadas por el cliente: etiqueta, dirección, notas, coordenadas y fechas. | Solo el usuario dueño y backend autorizado. Las copias usadas en pedidos van en snapshots del pedido. |
 | `users/{uid}/devices/{deviceId}` | Token FCM y metadatos mínimos del dispositivo. | El usuario puede registrar/eliminar su token mediante servicio; no es visible para otros usuarios. |
 | `users/{uid}/notifications/{notificationId}` | Avisos personales y estado de lectura. | Solo el usuario destinatario y backend. |
-| `platformRoles/{uid}` | Rol global y estado de superadministrador, asignados por un proceso de servidor autorizado. | Lectura y cambio protegidos; ninguna asignación desde cliente. |
+| `platformRoles/{uid}` | `uid`, rol global `superadmin`, estado, permisos explícitos, actor y fechas de asignación/cambio. | Solo Functions accede; ninguna asignación desde cliente; cambios sensibles registran evento de auditoría. |
 | `platformAuditEvents/{eventId}` | Acciones globales sensibles, actor, recurso, resultado y fecha. | Solo backend escribe; superadministradores autorizados leen. |
 | `appConfig/{configId}` | Configuración global versionada, sin secretos en documentos públicos. | Solo superadministrador autorizado y backend. |
 | `plans/{planId}` | Nombre, estado, `currentVersionId`, código estable. | Lectura pública limitada a planes visibles; cambios solo por backend administrativo. |
@@ -92,12 +92,12 @@
 | Ruta | Uso y campos principales | Acceso esperado |
 |---|---|---|
 | `restaurants/{restaurantId}` | Tenant: `name`, `slug`, `ownerUid`, `status`, datos públicos/privados separados, `mainBranchId`, `currentSubscriptionId`, `createdAt`, `updatedAt`. | Solo miembros autorizados y backend. No es la fuente de lectura pública del marketplace. |
-| `restaurants/{restaurantId}/memberships/{uid}` | `uid`, `role`, `status`, `branchAccess` (`all` o `selected`), `branchIds`, permisos delegados y actor de cambios. | Backend administra membresías. Rules/Functions validan membresía vigente y alcance. |
+| `restaurants/{restaurantId}/memberships/{uid}` | `uid`, `role` (`owner`, `administrator`, `employee`, `kitchen`, `delivery`), `status`, `branchAccess` (`all` o `selected`), `branchIds`, permisos delegados y actor/fechas de cambios. | Solo backend administra membresías. Functions valida UID autenticado, rol, permiso, estado y alcance antes de una acción; Rules aplicará una segunda barrera en el Día 13. |
 | `restaurants/{restaurantId}/branches/{branchId}` | Sede: nombre, código, dirección, ubicación, estado, horario y configuración local; `reservationTimeoutMinutes` (15 por defecto). | Miembros con acceso a esa sede y backend. Los cambios sensibles se auditan. |
 | `restaurants/{restaurantId}/branches/{branchId}/productStates/{productId}` | Disponibilidad, publicación local y precio opcional de un producto en esa sede. Solo existe cuando hay una excepción respecto al catálogo base. | Miembros con acceso a sede; cambios comerciales privilegiados por backend. |
 | `restaurants/{restaurantId}/branches/{branchId}/deliveryZones/{zoneId}` | Zona de cobertura, tarifa COP, regla de cobertura/geometría, estado y vigencia. Se mantiene por sede. | Lectura de personal autorizado; cambios por backend según permisos. Solo se publica la información necesaria para calcular o mostrar el domicilio. |
 
-**Decisión confirmada por el propietario el 5 de noviembre de 2026:** crear una sede principal al registrar cada restaurante; `mainBranchId` referencia esa sede. El plan Empresarial habilita sedes adicionales y sus límites se administran desde superadministración. El acceso de membresía usa `branchAccess: all|selected`; los detalles del permiso por acción se definen posteriormente.
+**Decisiones confirmadas por el propietario:** crear una sede principal al registrar cada restaurante; `mainBranchId` referencia esa sede. El plan Empresarial habilita sedes adicionales y sus límites se administran desde superadministración. La membresía usa `branchAccess: all|selected`. El Día 12 fijó la matriz base de permisos descrita abajo.
 
 ### 2.3 Catálogo e inventario
 
@@ -156,6 +156,22 @@ La búsqueda inicial usará filtros indexables, categoría, ciudad y campos norm
 ## 4. Reglas de autorización esperadas por ruta
 
 Este cuadro guía el diseño futuro de Security Rules; no reemplaza las reglas ejecutables del Día 13 ni la autorización de Functions.
+
+### 4.1 Matriz base aprobada para el Día 12
+
+| Actor/rol | Permisos base | Límites |
+|---|---|---|
+| `owner` | Administración del tenant, membresías y suscripción; permisos de operación en todas las sedes. | Solo su restaurante; no concede permisos de plataforma. |
+| `administrator` | Solo permisos de tenant delegados explícitamente por módulo. | No recibe `members.manage` ni `subscription.manage`; alcance `all` o `selected`. |
+| `employee` | Solo permisos de tenant delegados explícitamente. | Alcance `all` o `selected`; ningún permiso no incluido en la lista delegable. |
+| `kitchen` | Leer y actualizar preparación de pedidos asignados. | Debe comprobarse asignación del pedido y sede autorizada. |
+| `delivery` | Leer y actualizar progreso de entregas asignadas. | Debe comprobarse asignación de la entrega y sede autorizada. |
+| `customer` | Perfil, direcciones y pedidos propios. | El UID del recurso debe coincidir con el UID autenticado. |
+| `superadmin` | Permisos globales explícitos desde `platformRoles/{uid}`. | Separado de membresías de restaurante; asignaciones y acciones administrativas se auditan. |
+
+Los IDs de permisos son explícitos y están centralizados en `functions/src/authorization/domain/access-control.ts`. `owner` recibe todas las capacidades tenant, excepto las capacidades exclusivas de asignación de cocina/domicilio; `administrator` y `employee` reciben únicamente permisos delegables: `restaurant.read`, `restaurant.update`, `members.read`, `branches.list`, `branches.read`, `branches.manage`, `catalog.read`, `catalog.manage`, `orders.read`, `orders.manage`, `inventory.read`, `inventory.manage`, `customers.read`, `reports.read` y `settings.manage`. No se delegan `members.manage` ni `subscription.manage`. Cocina recibe `kitchen.orders.readAssigned` y `kitchen.orders.updateAssigned`; domiciliario recibe `delivery.orders.readAssigned` y `delivery.orders.updateAssigned`. Las capacidades propias del cliente son `profile.readOwn`, `profile.updateOwn`, `addresses.manageOwn` y `orders.readOwn`. Las capacidades globales de superadministración son explícitas y se asignan en `platformRoles/{uid}`; asignación vacía o desactivada equivale a no tener acceso.
+
+`getOwnRestaurantAccess` y `getOwnPlatformAccess` devuelven permisos para representar la interfaz, no para autorizar mutaciones. Toda callable que ejecute una acción debe usar los verificadores de backend `requireTenantPermission`, `requireAssignedTenantPermission`, `requireSelfPermission` o `requirePlatformPermission`, según corresponda. El verificador de recursos asignados comprueba además el UID asignado. Toda acción privilegiada de plataforma debe escribir su resultado con `recordPlatformAuditEvent`. La pertenencia y el rol se leen del documento de Firestore con el UID autenticado; el cliente no envía rol ni permisos efectivos. Cuando el alcance es `selected`, una consulta que liste sedes debe limitar resultados a `branchIds` del contexto autorizado. El Día 12 deja el núcleo listo; todavía no existen comandos de asignación de membresías ni acciones administrativas que lo consuman.
 
 | Datos | Anónimo | Cliente autenticado | Miembro tenant | Superadministrador |
 |---|---|---|---|---|

@@ -49,12 +49,14 @@ Los nombres siguientes son nombres del modelo lógico. No implican nombres de co
 | Entidad | Alcance | Atributos lógicos principales |
 |---|---|---|
 | **UserProfile** | Plataforma | ID de Firebase Authentication; nombre y datos de perfil mínimos; estado de cuenta; fechas de creación y actualización. No almacena contraseñas. |
-| **PlatformRole** | Plataforma | ID del usuario; rol global, por ejemplo superadministrador; estado; actor y fecha de asignación. Asignación exclusiva del backend autorizado. |
+| **PlatformRole** | Plataforma | ID del usuario; rol global `superadmin`; permisos globales explícitos; estado; actor y fecha de asignación. Asignación exclusiva del backend autorizado y cambios auditados. |
 | **Restaurant** | Tenant | ID; nombre; slug; propietario inicial; estado de operación; identidad visual; datos generales y contacto; fechas de creación/actualización. |
-| **Membership** | Tenant | Restaurante; usuario; rol; estado; permisos delegados si se habilitan; alcance de sedes; fechas y actor de alta/cambio. |
+| **Membership** | Tenant | Restaurante; usuario; rol (`owner`, `administrator`, `employee`, `kitchen` o `delivery`); estado; permisos delegados para administrador/empleado; alcance `all` o `selected` y sedes; fechas y actor de alta/cambio. Solo backend asigna o cambia roles y permisos. |
 | **Branch** | Tenant | Restaurante; nombre y código; dirección y ubicación; estado; configuración local de horarios, cobertura y operación; vencimiento de reserva (15 minutos por defecto). El propietario o administrador autorizado puede cambiar el plazo y el cambio queda auditado. |
 
 **Decisión confirmada por el propietario el 5 de noviembre de 2026:** cada restaurante se crea con una sede principal lógica. El plan Empresarial habilita sedes adicionales; sus límites se configuran desde superadministración.
+
+**Matriz base de roles aprobada por el propietario el 6 de noviembre de 2026:** el propietario administra el tenant, sus usuarios y su suscripción; administrador y empleado reciben permisos explícitos delegables, pero no obtienen `members.manage` ni `subscription.manage`; cocina recibe lectura/actualización de preparación de pedidos asignados; domiciliario recibe lectura/actualización de entregas asignadas; el cliente accede a recursos propios. Los permisos de superadministración son globales, separados de Membership y auditados. Las capacidades de restaurante se intersectan con el alcance de sedes; kitchen/delivery también requieren validar la asignación concreta del recurso.
 
 ### 4.2 Planes y suscripciones
 
@@ -208,13 +210,12 @@ El diagrama es lógico: no determina si las relaciones se guardarán como docume
 
 ## 8. Decisiones de implementación pendientes
 
-La aprobación de este documento cierra el modelo conceptual del Día 4. Estas decisiones de detalle se resolverán al preparar las colecciones y reglas del Día 5; no se consideran implementadas ni decididas por aprobar este modelo:
+La aprobación de este documento cierra el modelo conceptual del Día 4. La matriz base de roles y sedes se acordó en el Día 12. Siguen pendientes estas decisiones operativas:
 
-1. Definir permisos por rol y por sede, incluido si una membresía puede abarcar todas las sedes o una selección.
-2. Decidir si se permitirá compra como invitado y cómo se vincularán pedidos guest a una identidad autenticada posteriormente.
-3. Definir qué otros valores operativos además del inventario (por ejemplo, precios y horarios) serán por sede o por restaurante con excepciones locales. El inventario por sede ya está confirmado.
-4. Definir los estados de suscripción/pago y si se permite más de una suscripción activa por restaurante.
-5. Acordar política de conservación y borrado de datos personales para cumplir obligaciones aplicables.
+1. Decidir si se permitirá compra como invitado y cómo se vincularán pedidos guest a una identidad autenticada posteriormente.
+2. Definir qué otros valores operativos además del inventario (por ejemplo, precios y horarios) serán por sede o por restaurante con excepciones locales. El inventario por sede ya está confirmado.
+3. Definir los estados de suscripción/pago y si se permite más de una suscripción activa por restaurante.
+4. Acordar política de conservación y borrado de datos personales para cumplir obligaciones aplicables.
 
 ## 9. Límite con el Día 5
 

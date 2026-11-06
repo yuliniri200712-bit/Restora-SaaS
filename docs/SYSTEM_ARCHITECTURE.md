@@ -207,14 +207,15 @@ La ubicación y forma exacta de membresías, claims, datos públicos y documento
 
 La arquitectura general está aprobada. Estas decisiones operativas deben resolverse antes de implementar los flujos afectados:
 
+Resuelto en el Día 12: la membresía vive en `restaurants/{restaurantId}/memberships/{uid}` y las autoridades de plataforma en `platformRoles/{uid}`. Functions deriva el UID del token y lee la asignación vigente; no se usan claims de rol como fuente autoritativa.
+
 1. Región primaria de App Hosting y confirmación del plan de facturación y alertas de presupuesto.
 2. Si los despliegues de App Hosting se conectarán a GitHub o se ejecutarán mediante Firebase CLI, y qué rama será la rama activa.
 3. Qué lecturas privadas o de tiempo real usarán listeners del SDK cliente y cuáles pasarán siempre por Cloud Functions.
-4. Cómo se representará la membresía multi-restaurante y si algún claim de token será una optimización adicional; las reglas no dependerán de claims desactualizados.
-5. Identificación del cliente y alcance de acceso sin cuenta, según la decisión de compra como invitado.
-6. Proveedor de correo y pasarela inicial entre Wompi y Mercado Pago.
-7. Políticas de cobertura y cálculo de domicilio.
-8. Métricas objetivo de disponibilidad, latencia y volumen para dimensionar índices, funciones y monitoreo.
+4. Identificación del cliente y alcance de acceso sin cuenta, según la decisión de compra como invitado.
+5. Proveedor de correo y pasarela inicial entre Wompi y Mercado Pago.
+6. Políticas de cobertura y cálculo de domicilio.
+7. Métricas objetivo de disponibilidad, latencia y volumen para dimensionar índices, funciones y monitoreo.
 
 ## 10. Entregables y límites de esta jornada
 

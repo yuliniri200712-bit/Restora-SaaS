@@ -28,15 +28,15 @@ Este documento establece el alcance y los criterios que se podrán verificar. No
 
 | Actor | Requisito de acceso |
 |---|---|
-| Superadministrador | Administra la plataforma y puede consultar y gestionar los restaurantes, planes, solicitudes, suscripciones, pagos, notificaciones, soporte y auditoría según sus permisos. |
-| Propietario del restaurante | Administra su restaurante, su suscripción y los usuarios que pertenecen a su tenant. |
-| Administrador | Opera la configuración y los módulos del restaurante que le permita su rol. |
-| Empleado | Accede únicamente a las funciones del restaurante que le hayan sido autorizadas. |
-| Personal de cocina | Consulta y actualiza la preparación de los pedidos autorizados de su restaurante. |
-| Domiciliario | Consulta los pedidos de entrega que tenga asignados y registra su progreso de entrega. |
-| Cliente | Consulta el marketplace y gestiona únicamente su perfil, direcciones y pedidos asociados. |
+| Superadministrador | Rol global separado de las membresías de restaurante. Solo ejecuta acciones de plataforma con permisos globales asignados y auditados por el servidor. |
+| Propietario del restaurante | Tiene permisos de administración del propio restaurante, membresías y suscripción, limitados a ese tenant y a su alcance de sedes. |
+| Administrador | Recibe permisos delegables por módulo. No obtiene administración de membresías, propiedad ni suscripción por el solo hecho de tener este rol. |
+| Empleado | Recibe permisos delegables explícitos y limitados a su membresía y alcance de sedes. |
+| Personal de cocina | Consulta y actualiza la preparación solo de pedidos que le hayan sido asignados y dentro de sus sedes autorizadas. |
+| Domiciliario | Consulta y actualiza el progreso de entregas que le hayan sido asignadas y dentro de sus sedes autorizadas. |
+| Cliente | Consulta el marketplace y gestiona únicamente su perfil, direcciones y pedidos asociados a su UID. |
 
-La matriz final de permisos por acción y los permisos delegables quedan pendientes de concretar. En todos los casos, el servidor y las reglas de Firebase deben validar el rol y el tenant; ocultar opciones en la interfaz no constituye control de acceso.
+**Matriz base aprobada por el propietario el 6 de noviembre de 2026:** el propietario administra su tenant, usuarios y suscripción; administrador y empleado solo reciben permisos delegables, con membresías y suscripción reservadas al propietario; cocina y domiciliario conservan acceso a sus tareas asignadas; cliente solo accede a recursos propios. La membresía define alcance `all` o `selected` para sedes. Los permisos de superadministración se asignan aparte y las acciones de plataforma quedan auditadas. El servidor comprueba identidad, estado de membresía, permiso, tenant, sede y asignación del recurso; la interfaz no constituye control de acceso.
 
 ## 4. Requisitos funcionales
 
@@ -50,9 +50,9 @@ La matriz final de permisos por acción y los permisos delegables quedan pendien
 
 **Aceptación:** las lecturas y escrituras de un usuario de restaurante quedan limitadas a su tenant; las pruebas de seguridad demuestran que un usuario de un tenant no puede leer ni alterar registros de otro.
 
-**FR-003 — Roles.** El sistema reconocerá los siete actores descritos en la sección 3 y aplicará sus permisos en el servidor.
+**FR-003 — Roles.** El sistema reconocerá los siete actores descritos en la sección 3 y aplicará sus permisos en el servidor. Los roles de restaurante se resuelven desde la membresía activa; superadministración se resuelve de forma separada.
 
-**Aceptación:** una acción no autorizada se rechaza aunque se invoque fuera de la interfaz; los permisos efectivos se pueden comprobar mediante pruebas de reglas y backend.
+**Aceptación:** una acción no autorizada se rechaza aunque se invoque fuera de la interfaz; el servidor deriva el UID del token autenticado, valida el rol y alcance vigentes, y no acepta permisos enviados por el cliente. Los permisos efectivos se pueden comprobar mediante pruebas de reglas y backend.
 
 ### 4.2 Administración de plataforma
 
