@@ -2,7 +2,7 @@
 
 **Producto:** plataforma SaaS multiempresa para restaurantes
 
-**Estado:** estructura propuesta del Día 5; reglas tenant-aware implementadas localmente en el Día 13, pendientes de pruebas de emulador del Día 14
+**Estado:** estructura propuesta del Día 5; reglas tenant-aware implementadas en el Día 13 y verificadas con 12 casos en el Firestore Emulator del Día 14
 
 **Base:** `docs/DATABASE_SCHEMA.md` y arquitectura aprobada
 **Alcance:** nombres lógicos de colecciones, documentos, subcolecciones, consultas y límites de acceso. `firestore.rules` materializa una primera capa de lectura y protección; no crea recursos Firebase ni reemplaza autorización en Cloud Functions.
@@ -196,7 +196,7 @@ Los IDs de permisos son explícitos y están centralizados en `functions/src/aut
 
 Firestore Rules autoriza documentos completos, no oculta campos de un documento. Por eso cocina no recibe el pedido que contiene snapshot de dirección/contacto: Functions debe crear `kitchenTasks` como proyección de preparación sin PII. Functions también debe mantener `kitchenUid` en los pedidos y `currentDeliveryAssignmentId` apuntando a la asignación vigente; ningún cliente puede cambiarlos. La asignación del domiciliario se invalida si se reemplaza esa referencia. [Control de acceso a campos](https://firebase.google.com/docs/firestore/security/rules-fields)
 
-Las consultas cliente tienen que cumplir las mismas restricciones que la regla; Rules no filtra resultados, y un query potencialmente demasiado amplio se rechaza completo. Las reglas actuales se validarán contra casos permitidos y denegados en el Día 14 antes de despliegue. La consola/CLI todavía no desplegó estas reglas en `restora-demo` ni en otro proyecto. [Consultas seguras](https://firebase.google.com/docs/firestore/security/rules-query)
+Las consultas cliente tienen que cumplir las mismas restricciones que la regla; Rules no filtra resultados, y un query potencialmente demasiado amplio se rechaza completo. En el Día 14 pasaron 12 casos automatizados con `npm run test:rules`, usando `firebase.rules-test.json`, el Project ID aislado `demo-restora-day14` y el puerto 8180. El emulador cargó `firestore.rules`; no se inició Authentication Emulator para esta suite: la librería de reglas simuló los UID/estados de autenticación. No se desplegaron reglas en `restora-demo` ni en otro proyecto. [Consultas seguras](https://firebase.google.com/docs/firestore/security/rules-query), [pruebas con Emulator Suite](https://firebase.google.com/docs/firestore/security/test-rules-emulator)
 
 | Datos | Anónimo | Cliente autenticado | Miembro tenant | Superadministrador |
 |---|---|---|---|---|
@@ -255,7 +255,7 @@ El webhook verifica firma, proveedor, importe, moneda, referencia y estado antes
 5. **Suscripción vigente:** un solo `currentSubscriptionId` por restaurante; los registros pasados permanecen en `subscriptions`.
 6. **Retención:** no se elimina historial al expirar prueba. Retención legal, anonimización y borrado por solicitud quedan para la política de privacidad y la fase del piloto.
 
-La estructura de colecciones sigue siendo un diseño documental y todavía no se materializa en un proyecto Firebase real. El Día 6 agregó configuración local de emuladores y reglas base deny-all; el Día 13 implementó reglas tenant-aware locales. El Día 14 probará reglas y consultas en el emulador. No se desplegaron estas reglas ni existen datos de prueba en Firebase real.
+La estructura de colecciones sigue siendo un diseño documental y todavía no se materializa en un proyecto Firebase real. El Día 6 agregó configuración local de emuladores y reglas base deny-all; el Día 13 implementó reglas tenant-aware; en el Día 14 pasaron 12 casos con datos efímeros en Firestore Emulator. No se desplegaron estas reglas ni existen datos de producto en Firebase real.
 
 ## 8. Límite de la jornada
 
