@@ -27,17 +27,34 @@ function normalizeCredentials(email: string, password: string) {
   return { email: normalizedEmail, password };
 }
 
+function normalizeDisplayName(displayName: string): string {
+  const normalizedName = displayName.trim().replace(/\s+/g, " ");
+  if (normalizedName.length < 2 || normalizedName.length > 80) {
+    throw new AuthValidationError(
+      "El nombre debe tener entre 2 y 80 caracteres.",
+    );
+  }
+
+  return normalizedName;
+}
+
 export async function registerAccount(
   email: string,
   password: string,
+  displayName: string,
 ): Promise<AuthUser> {
   const credentials = normalizeCredentials(email, password);
+  const normalizedName = normalizeDisplayName(displayName);
   if (credentials.password.length < 6) {
     throw new AuthValidationError(
       "La contraseña debe tener al menos 6 caracteres.",
     );
   }
-  return repository.createAccount(credentials.email, credentials.password);
+  return repository.createAccount(
+    credentials.email,
+    credentials.password,
+    normalizedName,
+  );
 }
 
 export async function signInAccount(
@@ -61,6 +78,10 @@ export async function requestPasswordReset(email: string): Promise<void> {
 
     throw error;
   }
+}
+
+export function updateAccountDisplayName(displayName: string): Promise<AuthUser> {
+  return repository.updateDisplayName(normalizeDisplayName(displayName));
 }
 
 export function signOutAccount(): Promise<void> {

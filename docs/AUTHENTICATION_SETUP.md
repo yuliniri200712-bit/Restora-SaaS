@@ -1,7 +1,7 @@
 # Firebase Authentication
 
-**Jornadas:** Día 8 — configuración; Día 9 — registro e inicio de sesión; Día 10 — recuperación de contraseña.
-**Estado:** proveedor correo/contraseña habilitado en `restora-demo`; flujos cliente implementados para desarrollo local con Authentication Emulator. El propietario confirmó manualmente la recuperación de contraseña con un enlace del emulador.
+**Jornadas:** Día 8 — configuración; Día 9 — registro e inicio de sesión; Día 10 — recuperación de contraseña; Día 11 — perfil propio básico.
+**Estado:** proveedor correo/contraseña habilitado en `restora-demo`; flujos cliente implementados para desarrollo local con Authentication Emulator. El propietario confirmó recuperación de contraseña; el perfil propio del Día 11 espera validación manual.
 
 ## Proveedor y proyecto
 
@@ -45,6 +45,14 @@ El emulador no envía correos reales. La cuenta y sus datos de prueba se guardan
 - La respuesta de la interfaz es genérica para que un correo inexistente no se pueda distinguir del existente. Los errores de validación o de servicio se muestran en español.
 - En Authentication Emulator no se manda correo real: toma el enlace de acción de la salida de la terminal del emulador y úsalo para completar el cambio de contraseña.
 - La implementación pasó `npm run lint` y `npm run typecheck`. El propietario confirmó que abrió el enlace del emulador con una contraseña nueva y completó el flujo. No se ejecutó build para evitar interferir con el servidor local y `.next`.
+
+## Gestión básica del perfil propio — Día 11
+
+- El registro solicita un nombre visible de 2 a 80 caracteres y normaliza espacios antes de guardarlo.
+- `/cuenta` muestra el correo autenticado como dato de solo lectura y permite cambiar el nombre visible.
+- El nombre se guarda en `displayName` del usuario de Firebase Authentication. La app muestra una indicación para completar el perfil si no tiene nombre.
+- Esta entrega no asigna roles ni membresías, no crea perfiles `users/{uid}` en Firestore y no modifica las reglas temporales deny-all. La persistencia Firestore se añadirá cuando sus reglas estén preparadas.
+- Pasaron `npm run lint` y `npm run typecheck`. No se ejecutó build ni se modificó una cuenta del emulador; antes de cerrar la jornada falta probar el registro con nombre y su edición desde `/cuenta`.
 
 ## Límites de esta jornada
 

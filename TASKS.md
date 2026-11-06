@@ -1,13 +1,13 @@
 # Estado de tareas de Restora
 
 **Actualizado:** 2026-11-06
-**Fase actual:** Fase 2 — Autenticación y permisos (Días 8–14); siguiente: Día 11
+**Fase actual:** Fase 2 — Autenticación y permisos (Días 8–14); jornada activa: Día 11
 **Rama Git:** `main`
 **Sincronización:** por instrucción del propietario, crear un commit y hacer push a GitHub al cerrar cada jornada; informar los archivos subidos.
 
 ## Estado general
 
-La Fase 1 está cerrada. El Día 8 configuró el proveedor correo/contraseña en Firebase Authentication para el Project ID de desarrollo `restora-demo` usando el alias `dev`; `demo-restora-saas` sigue como predeterminado de los emuladores. Firebase CLI creó una “Default Web App”. El Día 9 incorporó una aplicación Next.js con registro, inicio/cierre de sesión y Firebase Web SDK. El propietario confirmó que pudo registrar la cuenta en Authentication Emulator y luego iniciar sesión en la app. El Día 10 añadió la solicitud de restablecimiento de contraseña en `/recuperar-contrasena`, accesible desde `/login`; pasaron lint y TypeScript, y el propietario confirmó manualmente que el enlace del emulador permite restablecer la contraseña. El cliente local apunta al proyecto demo del emulador; no se desplegó la web ni se creó un usuario en Firebase real. Todavía no hay Cloud Functions, perfiles de usuario/tenant en Firestore ni suite de pruebas automatizadas.
+La Fase 1 está cerrada. El Día 8 configuró el proveedor correo/contraseña en Firebase Authentication para el Project ID de desarrollo `restora-demo` usando el alias `dev`; `demo-restora-saas` sigue como predeterminado de los emuladores. Firebase CLI creó una “Default Web App”. El Día 9 incorporó una aplicación Next.js con registro, inicio/cierre de sesión y Firebase Web SDK. El propietario confirmó que pudo registrar la cuenta en Authentication Emulator y luego iniciar sesión en la app. El Día 10 implementó recuperación de contraseña en `/recuperar-contrasena`, confirmada manualmente por el propietario. El Día 11 implementó nombre visible al registrarse y edición del perfil propio en `/cuenta`, guardados en Firebase Authentication; falta validación manual de estos cambios. El cliente local apunta al proyecto demo del emulador; no se desplegó la web ni se creó un usuario en Firebase real. Todavía no hay perfiles de usuario/tenant en Firestore, Cloud Functions ni suite de pruebas automatizadas.
 
 ## Progreso por jornada
 
@@ -23,12 +23,13 @@ La Fase 1 está cerrada. El Día 8 configuró el proveedor correo/contraseña en
 | 8 | Configurar Firebase Authentication: `auth.providers.emailPassword` en `firebase.json` y guía en `docs/AUTHENTICATION_SETUP.md`. | **COMPLETADO Y PROBADO** | `firebase deploy --only auth --project dev` finalizó correctamente y confirmó correo/contraseña habilitado en `restora-demo`. Firebase CLI creó una “Default Web App”. No se probaron flujos cliente ni se inició el emulador; corresponden a jornadas posteriores. |
 | 9 | Crear la aplicación Next.js y los flujos de registro, inicio/cierre de sesión y estado de sesión, conectados al Authentication Emulator en desarrollo. | **COMPLETADO Y PROBADO MANUALMENTE** | Pasaron `npm run lint`, `npm run typecheck`, `npm ci --dry-run --ignore-scripts --no-audit --no-fund` y `npm run build` (con `CIRCLE_NODE_TOTAL=1` para evitar `EPERM` al escribir `.next` en OneDrive). El propietario confirmó que la cuenta aparece en Authentication Emulator, el registro abre `/cuenta` y el inicio de sesión desde `/login` funciona. No se conectó al proyecto real ni se desplegó App Hosting. |
 | 10 | Implementar recuperación de contraseña con Firebase Authentication y mostrar instrucciones para obtener el enlace local del emulador. | **COMPLETADO Y PROBADO MANUALMENTE** | Pasaron `npm run lint` y `npm run typecheck`. El propietario confirmó que abrió el enlace de recuperación del Authentication Emulator con una contraseña nueva y el flujo funcionó. No se ejecutó build para evitar interferir con el servidor local y `.next`. No se conectó al Firebase real. |
+| 11 | Crear gestión básica del perfil propio: solicitar nombre al registrarse y permitir editarlo desde la cuenta. | **IMPLEMENTADO; JORNADA ABIERTA PARA VALIDACIÓN MANUAL** | `npm run lint` y `npm run typecheck` pasaron. El nombre visible se guarda como `displayName` en Firebase Authentication. No se ejecutó build ni se modificaron cuentas del emulador. No se crearon documentos de Firestore ni se tocaron reglas deny-all; roles y membresías quedan en jornadas posteriores. |
 
 “Completado y probado” en esta fase significa que se verificaron los entregables documentales, de configuración, de código y los flujos manuales que la tabla describe. En el Día 8 se confirmó la configuración del proveedor mediante un despliegue exitoso; en el Día 9 también se confirmó manualmente registro e inicio de sesión contra Authentication Emulator. Aún no hay pruebas automatizadas de autenticación.
 
 ## Siguiente jornada
 
-**Día 11 — Crear gestión de usuarios.** El Día 10 agregó la ruta `/recuperar-contrasena` y el enlace desde `/login`; el propietario validó el restablecimiento contra Authentication Emulator.
+**Día 11 — Validar gestión del perfil propio.** Prueba en local el registro con nombre visible y luego edita ese nombre desde `/cuenta`. Al confirmar ambos casos, se cierra el Día 11 y sigue el Día 12 — roles y permisos.
 
 ## Pendientes y bloqueos conocidos
 
@@ -38,6 +39,7 @@ La Fase 1 está cerrada. El Día 8 configuró el proveedor correo/contraseña en
 - Authentication Emulator ya se inició y se probó manualmente. Firestore y Storage emulators todavía no se han iniciado; se requiere Node.js/npm, Firebase CLI y Java JDK compatible.
 - La matriz final de permisos por rol/sede, compra como invitado, política de suscripciones activas y conservación/borrado de datos sigue pendiente según `docs/DATABASE_SCHEMA.md` y `docs/PROJECT_REQUIREMENTS.md`.
 - No hay suite de pruebas automatizadas todavía. En el Día 10 pasaron `npm run lint` y `npm run typecheck`; `npm run build` no se ejecutó para evitar interferir con el servidor local y `.next` del propietario. Los tres scripts habían pasado en el Día 9.
+- El Día 11 pasó lint y TypeScript. Falta que el propietario pruebe manualmente registro con nombre y edición de perfil en `/cuenta`; el build se omitió para no interferir con `.next` del servidor local.
 
 ## Control de cambios
 

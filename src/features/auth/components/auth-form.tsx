@@ -11,6 +11,7 @@ type AuthFormProps = { mode: "login" | "register" };
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const isRegister = mode === "register";
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
@@ -27,7 +28,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     setIsSubmitting(true);
     try {
-      if (isRegister) await registerAccount(email, password);
+      if (isRegister) await registerAccount(email, password, displayName);
       else await signInAccount(email, password);
       router.replace("/cuenta");
       router.refresh();
@@ -68,6 +69,24 @@ export function AuthForm({ mode }: AuthFormProps) {
           </p>
 
           <form className="auth-form" onSubmit={handleSubmit}>
+            {isRegister && (
+              <>
+                <label className="field-label" htmlFor="register-name">Nombre completo</label>
+                <input
+                  autoComplete="name"
+                  className="text-input"
+                  id="register-name"
+                  maxLength={80}
+                  minLength={2}
+                  name="displayName"
+                  onChange={(event) => setDisplayName(event.target.value)}
+                  placeholder="Tu nombre"
+                  required
+                  type="text"
+                  value={displayName}
+                />
+              </>
+            )}
             <label className="field-label" htmlFor={`${mode}-email`}>Correo electrónico</label>
             <input
               autoComplete="email"
