@@ -1,7 +1,7 @@
 # Entorno de desarrollo Firebase
 
-**Jornadas:** Día 6 — configuración local; Día 12 — Functions Emulator y autorización backend; Día 14 — pruebas de Firestore Rules
-**Estado:** Emulator Suite configurada para Auth, Firestore, Storage y Functions; 12 casos de Firestore Rules pasan en el emulador local. No hay despliegue de App Hosting, reglas ni Functions.
+**Jornadas:** Día 6 — configuración local; Día 12 — Functions Emulator y autorización backend; Día 14 — pruebas de Firestore Rules; Día 15 — registro de restaurantes y pruebas de callables
+**Estado:** Emulator Suite configurada para Auth, Firestore, Storage y Functions; 13 casos de Rules y 6 pruebas de registro pasan localmente. No hay despliegue de App Hosting, reglas ni Functions.
 
 ## Iniciar los emuladores
 
@@ -25,21 +25,23 @@ Detén el proceso con `Ctrl+C`. La configuración está en `firebase.json`; el a
 
 ## Estado de la configuración
 
-- `firestore.rules` implementa lecturas directas tenant-aware por UID, membresía, permiso, sede y asignación; los casos de prueba del Día 14 pasaron. `storage.rules` sigue en denegación total hasta su jornada de seguridad.
+- `firestore.rules` implementa lecturas directas tenant-aware por UID, membresía, permiso, sede y asignación; 13 casos de Rules pasan. `restaurantSlugs` está denegado explícitamente para clientes. `storage.rules` sigue en denegación total hasta su jornada de seguridad.
 - `firebase.json` declara el proveedor de correo y contraseña; se aplicó correctamente al proyecto `restora-demo` mediante el alias `dev`. Firebase CLI creó una “Default Web App” al aprovisionar Auth. Authentication Emulator está configurado en el puerto 9099 y el propietario lo inició para validar registro e inicio de sesión. El emulador no envía correos reales: para verificar correo o restablecer contraseña genera enlaces locales en la salida del emulador.
 - Si se modifica la configuración de Auth, se puede volver a aplicar con `firebase deploy --only auth --project dev`. Mantén el alias predeterminado demo para emuladores.
 - Cloud Functions usa runtime Node.js 22. El Día 12 agregó `functions/` con verificadores de permisos y las callables `getOwnRestaurantAccess` y `getOwnPlatformAccess`; Functions Emulator usa el puerto 5001. No se desplegaron funciones al proyecto real.
 - Para ejecutar Auth, Firestore y Functions Emulator, instala las dependencias de la app y backend, ejecuta `npm --prefix functions run build` y arranca `firebase emulators:start --only auth,firestore,functions`. En otra terminal ejecuta `npm run dev`.
-- Para probar Security Rules ejecuta `npm run test:rules`. `firebase.rules-test.json` configura solo Firestore Emulator en `127.0.0.1:8180`, desactiva Emulator UI para ese proceso y carga `firestore.rules`. La suite usa el Project ID demo aislado `demo-restora-day14`, siembra datos efímeros con reglas desactivadas solo en el emulador y limpia Firestore antes de cada caso. No usa el alias `dev` ni el proyecto real `restora-demo`.
+- Para probar Security Rules ejecuta `npm run test:rules`. `firebase.rules-test.json` configura Firestore Emulator en `127.0.0.1:8180`, hub en `4481` y logging en `4482`, desactiva Emulator UI y carga `firestore.rules`. La suite usa el Project ID demo aislado `demo-restora-day14`, siembra datos efímeros con reglas desactivadas solo en el emulador y limpia Firestore antes de cada caso. No usa el alias `dev` ni el proyecto real `restora-demo`.
+- Para probar el alta ejecuta `npm run test:restaurant-registration`. Primero compila Functions; luego arranca Auth Emulator en `9299`, Firestore en `8280`, Functions en `5101`, Eventarc en `9498`, hub en `4481` y logging en `4482`, desactivando Emulator UI. Usa el Project ID demo `demo-restora-day15` y crea usuarios/datos solo en emuladores efímeros. La suite verifica registro no autenticado, alta, branch/membership, `getOwnRestaurantAccess`, idempotencia concurrente, colisión concurrente de slug y validaciones. No se conecta a `restora-demo` ni a Firebase real.
+- El emulador reportó que el host usa Node.js 24 aunque Functions declara runtime objetivo Node.js 22; el build pasó y las seis pruebas pasaron con el host Node 24. La emulación local no es despliegue ni valida runtime de producción Node 22.
 - Las pruebas requieren Node.js 24.12.0 o superior por `@firebase/rules-unit-testing` 6.0.0. El runtime objetivo de Cloud Functions continúa en Node.js 22.
-- Los 12 casos de Rules cubren UID autenticado/no autenticado, aislamiento de tenant/sede, permisos delegados, estados suspendidos, pedidos propios, acceso asignado de cocina/domicilio, lectura pública publicada, auditoría, consultas y rechazo de escrituras sensibles. Las pruebas usan contextos de autenticación simulados; no ejercitan registro/inicio de sesión con credenciales ni callables de Functions.
+- Los 13 casos de Rules cubren UID autenticado/no autenticado, aislamiento de tenant/sede, permisos delegados, estados suspendidos, pedidos propios, acceso asignado de cocina/domicilio, lectura pública publicada, auditoría, consultas, rechazo de escrituras sensibles y denegación del registro de slugs. Esos casos usan contextos Auth simulados. La suite separada del Día 15 sí crea cuentas efímeras en Auth Emulator y prueba callables de Functions.
 - La aplicación cliente está en `src/`. `.env.local` contiene la configuración de la Web App de desarrollo y está excluida de Git; `.env.example` tiene solo marcadores de posición. No añadas archivos locales `.env` al repositorio.
-- El cliente de esta jornada se conecta al emulador de Auth en `127.0.0.1:9099`; las callables se conectarán desde sus repositorios cliente cuando haya flujos de restaurante. Ningún flujo de permisos se conecta al Firebase real.
+- El cliente se conecta a Auth Emulator en `127.0.0.1:9099` y `getFirebaseFunctions()` a Functions Emulator en `127.0.0.1:5001` durante desarrollo; la página `/restaurantes/nuevo` usa la callable, nunca Firestore directo. Ningún flujo de registro se conecta al Firebase real.
 - Firebase App Hosting sigue siendo el destino de alojamiento aprobado para la web. Esta configuración solo prepara desarrollo local; no crea un proyecto Firebase, no vincula una cuenta y no despliega servicios.
 
 ## Próximo paso de Firebase
 
-Al implementar flujos de negocio, conectar sus SDKs a estos emuladores y repetir las pruebas de Rules con cada cambio. Las callables deberán validarse por separado. Firebase App Hosting se configurará cuando el producto esté listo para el despliegue correspondiente.
+El registro se puede validar manualmente con `firebase emulators:start --only auth,firestore,functions` y `npm run dev` en otra terminal, iniciando sesión y abriendo `/restaurantes/nuevo`. El owner queda con acceso al tenant en estado `setup`; la prueba gratuita y el acceso operativo se habilitarán en la fase de suscripciones. Firebase App Hosting se configurará cuando el producto esté listo para el despliegue correspondiente.
 
 ## Referencias
 

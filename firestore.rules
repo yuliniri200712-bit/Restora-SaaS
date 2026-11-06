@@ -288,6 +288,10 @@ service cloud.firestore {
       }
     }
 
+    match /restaurantSlugs/{slug} {
+      allow read, write: if false;
+    }
+
     match /restaurants/{restaurantId} {
       allow get: if hasTenantPermission(restaurantId, 'restaurant.read');
 

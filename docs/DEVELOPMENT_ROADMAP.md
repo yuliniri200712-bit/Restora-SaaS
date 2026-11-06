@@ -2,7 +2,7 @@
 
 **Duración:** 120 días
 **Fuente:** ruta aprobada del prompt maestro del proyecto
-**Estado al 2026-11-06:** Días 1–14 cerrados. El Día 11 implementó el perfil propio básico y el propietario confirmó el registro con nombre y edición desde `/cuenta`. El Día 12 implementó en Cloud Functions el núcleo de permisos aprobado para los siete actores, con alcance por sede y plataforma separada; pasaron lint, TypeScript, build de Functions y validación JSON. El Día 13 configuró reglas tenant-aware locales. El Día 14 agregó y ejecutó 12 casos de Security Rules en Firestore Emulator; los 12 pasaron. No se desplegó a Firebase real. Siguiente jornada: Día 15
+**Estado al 2026-11-06:** Días 1–14 cerrados. El Día 15 implementó el alta de restaurantes en Cloud Functions y `/restaurantes/nuevo`, incluyendo sede principal, membresía owner, reserva de slug e idempotencia. Pasaron lint, TypeScript, build de Functions, 6 pruebas de integración y 13 casos de Rules. La prueba manual del formulario por el propietario sigue pendiente. No se desplegó a Firebase real.
 **Destino aprobado para la web:** Firebase App Hosting. Vercel queda excluido por decisión del propietario.
 
 Esta ruta se ejecuta una jornada por vez, a solicitud del propietario. El avance y las verificaciones reales se registran en `TASKS.md`. `[x]` indica jornada cerrada, `[~]` trabajo parcial y `[ ]` pendiente. Una marca no implica pruebas automatizadas si `TASKS.md` indica que no se ejecutaron.
@@ -29,7 +29,7 @@ Esta ruta se ejecuta una jornada por vez, a solicitud del propietario. El avance
 
 ## Fase 3 — Sistema multiempresa (Días 15–21)
 
-- [ ] **Día 15:** Implementar registro de restaurantes.
+- [~] **Día 15:** Implementar registro de restaurantes. La callable autenticada `registerRestaurant` crea restaurante en `setup`, sede principal, membresía `owner` con UID verificado, slug único reservado, auditoría e idempotencia en transacción; la pantalla `/restaurantes/nuevo` se enlaza desde `/cuenta` y usa Functions Emulator. `npm run test:restaurant-registration` pasó 6 casos (incluye idempotencia y slugs concurrentes); `npm run test:rules` pasó 13 casos. También pasaron lint, TypeScript y build de Functions. No se desplegó. La prueba manual del formulario por el propietario sigue pendiente. FR-006 permanece para la fase de suscripciones.
 - [ ] **Día 16:** Crear perfiles de restaurantes y propietarios.
 - [ ] **Día 17:** Implementar identificación y asociación de tenant.
 - [ ] **Día 18:** Garantizar aislamiento de datos.

@@ -7,6 +7,14 @@
       "host": "127.0.0.1",
       "port": 8180
     },
+    "hub": {
+      "host": "127.0.0.1",
+      "port": 4481
+    },
+    "logging": {
+      "host": "127.0.0.1",
+      "port": 4482
+    },
     "ui": {
       "enabled": false
     },

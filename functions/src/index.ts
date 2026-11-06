@@ -5,6 +5,7 @@ import {
   resolveOwnPlatformAccess,
   resolveOwnRestaurantAccess,
 } from "./authorization/application/authorization.service";
+import { registerRestaurant as registerRestaurantService } from "./restaurants/application/register-restaurant.service";
 
 type RestaurantAccessRequest = {
   restaurantId?: unknown;
@@ -23,4 +24,14 @@ export const getOwnPlatformAccess = onCall<
   Promise<OwnPlatformAccess>
 >({ region: "us-central1" }, async (request) =>
   resolveOwnPlatformAccess(request),
+);
+
+export const registerRestaurant = onCall<unknown, Promise<{
+  restaurantId: string;
+  branchId: string;
+  slug: string;
+  status: "setup";
+  replayed: boolean;
+}>>({ region: "us-central1" }, (request) =>
+  registerRestaurantService(request),
 );

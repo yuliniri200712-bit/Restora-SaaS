@@ -94,6 +94,9 @@ export function AccountSession() {
             <strong>{user.email ?? "Correo no disponible"}</strong>
           </span>
         </div>
+        <Link className="primary-button restaurant-register-link" href="/restaurantes/nuevo">
+          Registrar un restaurante <span aria-hidden="true">→</span>
+        </Link>
         {!user.displayName && (
           <p className="profile-prompt" role="status">
             Completa tu perfil agregando el nombre que quieres mostrar en tu cuenta.

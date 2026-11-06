@@ -17,6 +17,7 @@ import {
   getPlatformRoleAssignment,
   getRestaurantMembership,
 } from "../data/firestore-access.repository";
+import { parseDocumentId, requireUid } from "../../shared/auth/callable-request";
 
 export type OwnRestaurantAccess = {
   restaurantId: string;
@@ -53,26 +54,6 @@ const ASSIGNED_TENANT_PERMISSIONS: ReadonlySet<TenantPermission> = new Set([
   "delivery.orders.readAssigned",
   "delivery.orders.updateAssigned",
 ]);
-
-function requireUid(request: CallableRequest<unknown>): string {
-  const uid = request.auth?.uid;
-  if (!uid) {
-    throw new HttpsError("unauthenticated", "Inicia sesión para continuar.");
-  }
-  return uid;
-}
-
-function parseDocumentId(value: unknown, label: string): string {
-  const normalized = typeof value === "string" ? value.trim() : "";
-  if (
-    normalized.length === 0 ||
-    normalized.includes("/") ||
-    normalized.length > 128
-  ) {
-    throw new HttpsError("invalid-argument", `El identificador de ${label} no es válido.`);
-  }
-  return normalized;
-}
 
 /** Returns permission hints for the UI; mutations must call requireTenantPermission. */
 export async function resolveOwnRestaurantAccess(

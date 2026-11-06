@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-restora-day14 --config firebase.rules-test.json \"node --test tests/firestore.rules.test.mjs\""
+    "test:rules": "firebase emulators:exec --only firestore --project demo-restora-day14 --config firebase.rules-test.json \"node --test tests/firestore.rules.test.mjs\"",
+    "test:restaurant-registration": "npm --prefix functions run build && firebase emulators:exec --only auth,firestore,functions --project demo-restora-day15 --config firebase.day15-test.json \"node --test tests/restaurant-registration.test.mjs\""
   },
   "dependencies": {
     "firebase": "^13.2.0",

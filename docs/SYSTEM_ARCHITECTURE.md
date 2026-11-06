@@ -80,25 +80,24 @@ apps/web/
 
 functions/src/
   index.ts                  exportación de endpoints, triggers y schedulers
-  modules/
-    identity/               autenticación, autorización y memberships
-    restaurants/            tenant y configuración del restaurante
-    subscriptions/          prueba, planes, solicitudes y activación
-    catalog/                categorías, productos, variantes e inventario
-    marketplace/            datos públicos de restaurantes y catálogos
-    orders/                 checkout, pedidos y estados
-    delivery/               zonas, tarifas, asignaciones y entregas
-    payments/               adaptadores y webhooks verificados
-    notifications/          notificaciones internas, push y correo
-    reporting/              métricas y reportes
-    audit/                  registro de acciones sensibles
+  authorization/            permisos y resolución de membresías
+  restaurants/              registro/tenant (domain, application, data)
+  subscriptions/            prueba, planes, solicitudes y activación (futuro)
+  catalog/                  categorías, productos, variantes e inventario (futuro)
+  marketplace/              datos públicos y catálogos (futuro)
+  orders/                   checkout, pedidos y estados (futuro)
+  delivery/                 zonas, tarifas, asignaciones y entregas (futuro)
+  payments/                 adaptadores y webhooks verificados (futuro)
+  notifications/            notificaciones internas, push y correo (futuro)
+  reporting/                métricas y reportes (futuro)
+  audit/                    registro de acciones sensibles (futuro)
   shared/
     auth/                   extracción y validación de identidad
     validation/             validación de contratos de entrada
     errors/                 errores tipados y conversión a respuestas API
 ```
 
-Dentro de cada módulo backend se recomienda separar:
+ En los módulos backend implementados se separa:
 
 - **Entradas:** callable/HTTP handlers, triggers y funciones programadas; validan formato de entrada, identidad, App Check cuando aplique y permisos iniciales.
 - **Casos de uso:** coordinan la operación y hacen cumplir las reglas del dominio.

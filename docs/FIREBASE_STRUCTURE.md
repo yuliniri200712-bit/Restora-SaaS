@@ -2,7 +2,7 @@
 
 **Producto:** plataforma SaaS multiempresa para restaurantes
 
-**Estado:** estructura propuesta del Día 5; reglas tenant-aware implementadas en el Día 13 y verificadas con 12 casos en el Firestore Emulator del Día 14
+**Estado:** estructura propuesta del Día 5; reglas tenant-aware implementadas en el Día 13 y verificadas con 13 casos hasta el Día 15; el registro de restaurantes se prueba además en Functions Emulator
 
 **Base:** `docs/DATABASE_SCHEMA.md` y arquitectura aprobada
 **Alcance:** nombres lógicos de colecciones, documentos, subcolecciones, consultas y límites de acceso. `firestore.rules` materializa una primera capa de lectura y protección; no crea recursos Firebase ni reemplaza autorización en Cloud Functions.
@@ -23,6 +23,7 @@
 
 ```text
 /users/{uid}
+  /restaurantRegistrationRequests/{requestId}
   /addresses/{addressId}
   /devices/{deviceId}
   /notifications/{notificationId}
@@ -33,6 +34,7 @@
 /plans/{planId}
   /versions/{versionId}
 /paymentWebhookEvents/{eventHash}
+/restaurantSlugs/{slug}
 
 /restaurants/{restaurantId}
   /branches/{branchId}
@@ -81,24 +83,28 @@
 | `users/{uid}/addresses/{addressId}` | Direcciones guardadas por el cliente: etiqueta, dirección, notas, coordenadas y fechas. | Solo el usuario dueño y backend autorizado. Las copias usadas en pedidos van en snapshots del pedido. |
 | `users/{uid}/devices/{deviceId}` | Token FCM y metadatos mínimos del dispositivo. | El usuario puede registrar/eliminar su token mediante servicio; no es visible para otros usuarios. |
 | `users/{uid}/notifications/{notificationId}` | Avisos personales y estado de lectura. | Solo el usuario destinatario y backend. |
+| `users/{uid}/restaurantRegistrationRequests/{requestId}` | Índice idempotente privado del alta; enlaza requestId, hash de entrada y resultado creado. El padre `users/{uid}` puede no existir aún como documento. | Solo Cloud Functions; reglas cliente denegadas por defecto. |
 | `platformRoles/{uid}` | `uid`, rol global `superadmin`, estado, permisos explícitos, actor y fechas de asignación/cambio. | Solo Functions accede; ninguna asignación desde cliente; cambios sensibles registran evento de auditoría. |
 | `platformAuditEvents/{eventId}` | Acciones globales sensibles, actor, recurso, resultado y fecha. | Solo backend escribe; superadministradores autorizados leen. |
 | `appConfig/{configId}` | Configuración global versionada, sin secretos en documentos públicos. | Solo superadministrador autorizado y backend. |
 | `plans/{planId}` | Nombre, estado, `currentVersionId`, código estable. | Lectura pública limitada a planes visibles; cambios solo por backend administrativo. |
 | `plans/{planId}/versions/{versionId}` | Precio COP, límites, capacidades, vigencia y snapshot de características. | Backend crea versiones; solicitudes y suscripciones guardan el ID de versión aplicado. |
 | `paymentWebhookEvents/{eventHash}` | Dedupe de webhooks por proveedor y evento; resultado de procesamiento y timestamps. | Solo Cloud Functions. `eventHash` se deriva de proveedor + ID de evento, sin incluir secretos. |
+| `restaurantSlugs/{slug}` | Reserva única para resolver el slug público a su `restaurantId`; el backend agrega un sufijo normalizado si el slug base ya existe. | Solo Cloud Functions; lectura y escritura de cliente explícitamente denegadas en `firestore.rules`. |
 
 ### 2.2 Raíz del restaurante y sedes
 
 | Ruta | Uso y campos principales | Acceso esperado |
 |---|---|---|
-| `restaurants/{restaurantId}` | Tenant: `name`, `slug`, `ownerUid`, `status`, datos públicos/privados separados, `mainBranchId`, `currentSubscriptionId`, `createdAt`, `updatedAt`. | Solo miembros autorizados y backend. No es la fuente de lectura pública del marketplace. |
-| `restaurants/{restaurantId}/memberships/{uid}` | `uid`, `role` (`owner`, `administrator`, `employee`, `kitchen`, `delivery`), `status`, `branchAccess` (`all` o `selected`), `branchIds`, permisos delegados y actor/fechas de cambios. | Solo backend administra membresías. Functions valida UID autenticado, rol, permiso, estado y alcance antes de una acción; Rules aplica lectura propia como segunda barrera. |
-| `restaurants/{restaurantId}/branches/{branchId}` | Sede: nombre, código, dirección, ubicación, estado, horario y configuración local; `reservationTimeoutMinutes` (15 por defecto). | Miembros con acceso a esa sede y backend. Los cambios sensibles se auditan. |
+| `restaurants/{restaurantId}` | Tenant: `name`, `slug`, `ownerUid`, `contactPhone`, `status` (`setup` al registrarse), `mainBranchId`, `currentSubscriptionId` (null hasta la fase de suscripciones), `createdAt`, `updatedAt`. | Solo miembros autorizados y backend. `setup` no significa habilitación comercial. No es la fuente de lectura pública del marketplace. |
+| `restaurants/{restaurantId}/memberships/{uid}` | `uid` (debe coincidir con ID y token), `role` (`owner`, `administrator`, `employee`, `kitchen`, `delivery`), `status`, `branchAccess` (`all` o `selected`), `branchIds`, permisos delegados y actor/fechas de cambios. | Solo backend administra membresías. Functions valida UID autenticado, rol, permiso, estado y alcance antes de una acción; Rules aplica lectura propia como segunda barrera. |
+| `restaurants/{restaurantId}/branches/{branchId}` | Sede: nombre, código (`MAIN` en la principal), ciudad, dirección, teléfono, ubicación, estado, horario y configuración local; `reservationTimeoutMinutes` (15 por defecto). | Miembros con acceso a esa sede y backend. Los cambios sensibles se auditan. |
 | `restaurants/{restaurantId}/branches/{branchId}/productStates/{productId}` | Disponibilidad, publicación local y precio opcional de un producto en esa sede. Solo existe cuando hay una excepción respecto al catálogo base. | Miembros con acceso a sede; cambios comerciales privilegiados por backend. |
 | `restaurants/{restaurantId}/branches/{branchId}/deliveryZones/{zoneId}` | Zona de cobertura, tarifa COP, regla de cobertura/geometría, estado y vigencia. Se mantiene por sede. | Lectura de personal autorizado; cambios por backend según permisos. Solo se publica la información necesaria para calcular o mostrar el domicilio. |
 
 **Decisiones confirmadas por el propietario:** crear una sede principal al registrar cada restaurante; `mainBranchId` referencia esa sede. El plan Empresarial habilita sedes adicionales y sus límites se administran desde superadministración. La membresía usa `branchAccess: all|selected`. El Día 12 fijó la matriz base de permisos descrita abajo.
+
+El Día 15 implementó `registerRestaurant` en Cloud Functions. En una transacción crea restaurante, sede principal, membership owner, reserva en `restaurantSlugs`, evento `restaurant.registered`, recibo en `operationReceipts` e índice idempotente en `users/{uid}/restaurantRegistrationRequests/{requestId}`. Repetir el mismo requestId y hash devuelve el mismo restaurante; reutilizarlo con datos distintos se rechaza. Las reglas del cliente no se relajan. El tenant permanece en `setup`, sin prueba ni suscripción, hasta la fase prevista para suscripciones; FR-006 sigue pendiente de implementación. En esta etapa cualquier usuario autenticado puede crear más de un tenant; todavía no se aplican cupos ni límites por propietario y deberán definirse antes del autoservicio público.
 
 ### 2.3 Catálogo e inventario
 

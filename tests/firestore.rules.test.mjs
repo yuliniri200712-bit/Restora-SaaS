@@ -331,6 +331,18 @@ test("solo expone proyecciones públicas publicadas", async () => {
   await assertFails(setDoc(doc(guest, "publicRestaurants/new-restaurant"), { published: true }));
 });
 
+test("el registro de slugs de restaurantes no es accesible desde clientes", async () => {
+  const owner = testEnvironment.authenticatedContext("owner-a").firestore();
+
+  await assertFails(getDoc(doc(owner, "restaurantSlugs/restaurante-demo")));
+  await assertFails(
+    setDoc(doc(owner, "restaurantSlugs/restaurante-demo"), {
+      restaurantId: "tenant-a",
+      ownerUid: "owner-a",
+    }),
+  );
+});
+
 test("rechaza escrituras directas a pedidos, inventario, membresías y pagos", async () => {
   const owner = client("owner-a");
 
