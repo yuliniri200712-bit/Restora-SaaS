@@ -48,13 +48,15 @@ Los nombres siguientes son nombres del modelo lógico. No implican nombres de co
 
 | Entidad | Alcance | Atributos lógicos principales |
 |---|---|---|
-| **UserProfile** | Plataforma | ID de Firebase Authentication; nombre y datos de perfil mínimos; estado de cuenta; fechas de creación y actualización. No almacena contraseñas. |
+| **UserProfile** | Plataforma | ID de Firebase Authentication; nombre visible repetible; alias único global e independiente del restaurante; datos de perfil mínimos; estado de cuenta; fechas de creación y actualización. No almacena contraseñas. |
 | **PlatformRole** | Plataforma | ID del usuario; rol global, por ejemplo superadministrador; estado; actor y fecha de asignación. Asignación exclusiva del backend autorizado. |
 | **Restaurant** | Tenant | ID; nombre; slug; propietario inicial; estado de operación; identidad visual; datos generales y contacto; fechas de creación/actualización. |
 | **Membership** | Tenant | Restaurante; usuario; rol; estado; permisos delegados si se habilitan; alcance de sedes; fechas y actor de alta/cambio. |
 | **Branch** | Tenant | Restaurante; nombre y código; dirección y ubicación; estado; configuración local de horarios, cobertura y operación; vencimiento de reserva (15 minutos por defecto). El propietario o administrador autorizado puede cambiar el plazo y el cambio queda auditado. |
 
 **Decisión confirmada por el propietario el 5 de noviembre de 2026:** cada restaurante se crea con una sede principal lógica. El plan Empresarial habilita sedes adicionales; sus límites se configuran desde superadministración.
+
+**Decisión confirmada por el propietario el 6 de noviembre de 2026:** el nombre visible no es único. Cada alias es único globalmente en Restora, se compara sin distinguir mayúsculas y no cambia el correo usado para iniciar sesión. El servidor reserva el alias de forma atómica.
 
 ### 4.2 Planes y suscripciones
 

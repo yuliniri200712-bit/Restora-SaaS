@@ -1,7 +1,7 @@
 # Firebase Authentication
 
-**Jornadas:** Día 8 — configuración; Día 9 — registro e inicio de sesión; Día 10 — recuperación de contraseña; Día 11 — perfil propio básico.
-**Estado:** proveedor correo/contraseña habilitado en `restora-demo`; flujos cliente implementados para desarrollo local con Authentication Emulator. El propietario confirmó recuperación de contraseña; el perfil propio del Día 11 espera validación manual.
+**Jornadas:** Día 8 — configuración; Día 9 — registro e inicio de sesión; Día 10 — recuperación de contraseña; Día 11 — perfil y alias propio.
+**Estado:** proveedor correo/contraseña habilitado en `restora-demo`; los flujos de Auth, perfil y alias se desarrollan localmente con Emulator Suite. El propietario confirmó recuperación de contraseña; alias único espera validación manual.
 
 ## Proveedor y proyecto
 
@@ -51,8 +51,11 @@ El emulador no envía correos reales. La cuenta y sus datos de prueba se guardan
 - El registro solicita un nombre visible de 2 a 80 caracteres y normaliza espacios antes de guardarlo.
 - `/cuenta` muestra el correo autenticado como dato de solo lectura y permite cambiar el nombre visible.
 - El nombre se guarda en `displayName` del usuario de Firebase Authentication. La app muestra una indicación para completar el perfil si no tiene nombre.
-- Esta entrega no asigna roles ni membresías, no crea perfiles `users/{uid}` en Firestore y no modifica las reglas temporales deny-all. La persistencia Firestore se añadirá cuando sus reglas estén preparadas.
-- Pasaron `npm run lint` y `npm run typecheck`. No se ejecutó build ni se modificó una cuenta del emulador; antes de cerrar la jornada falta probar el registro con nombre y su edición desde `/cuenta`.
+- El alias es global, se normaliza a minúsculas y admite 3–20 caracteres: comienza con una letra y continúa con letras, números o guion bajo. No reemplaza el correo para iniciar sesión.
+- `claimOwnAlias` valida identidad desde Firebase Authentication y reclama `userAliases/{alias}` junto con el puntero `userAliasOwners/{uid}` en una transacción de Cloud Functions. Un alias ocupado produce un error sin revelar quién lo usa; al renombrar, la reserva anterior se libera dentro de la misma transacción.
+- Las reglas de Firestore permanecen deny-all; el cliente no lee ni escribe el índice de alias. La reserva solo ocurre en Functions con Admin SDK.
+- Esta entrega no asigna roles ni membresías y todavía no crea el perfil completo `users/{uid}`.
+- Pasaron `npm run lint`, `npm run typecheck` y `npm --prefix functions run build`. No se desplegó Functions ni se ejecutó el build de Next.js. La validación manual requiere Auth, Firestore y Functions Emulator y queda pendiente.
 
 ## Límites de esta jornada
 

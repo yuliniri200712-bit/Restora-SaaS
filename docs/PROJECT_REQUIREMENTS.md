@@ -44,7 +44,9 @@ La matriz final de permisos por acción y los permisos delegables quedan pendien
 
 **FR-001 — Autenticación.** El sistema permitirá registro, inicio de sesión y recuperación de contraseña mediante Firebase Authentication.
 
-**Aceptación:** un usuario puede autenticarse y recuperar el acceso; las operaciones protegidas requieren una identidad válida; el servidor comprueba la autorización antes de acceder a datos o ejecutar cambios.
+**Identidad visible:** el nombre visible puede repetirse; cada cuenta puede reservar un alias único en toda Restora, sin distinguir mayúsculas. El alias no reemplaza el correo como credencial de acceso.
+
+**Aceptación:** un usuario puede autenticarse y recuperar el acceso; las operaciones protegidas requieren una identidad válida; el servidor comprueba la autorización antes de acceder a datos o ejecutar cambios. Dos usuarios no pueden reservar el mismo alias, incluso en solicitudes simultáneas.
 
 **FR-002 — Restaurantes y tenants.** Cada restaurante tendrá identificador único, propietario, usuarios asociados, configuración y datos comerciales propios.
 
